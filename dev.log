@@ -1,0 +1,79 @@
+hi :)
+warning: this log contains opinions. you may choose to turn back if you hate opinions.
+
+day smth i forgor: i make game
+
+
+dev.log made, i feel like 
+day 1: 9/21/23
+i make bg yaey
+
+
+day 2: 9/22/23
+i play brawl stars with alex (i had quests in boss fight, we got to insane 17 iirc)
+rmb edgar + colt is op strat
+
+
+day 3: 9/23/23
+made the control system
+i have to think long term
+idk how long, but rn im forseeing controller support
+i expected just textures and sound
+WHY DO I THINK SO LONG TERM
+
+rn i feel like im just one person writing an entire company's code
+must be a small company then
+did i mention that im on plane rn
+
+control system: no momentum, wasd/arrows move (i want 2p support also, so this system is def gon change
+ok i done making the player move
+i go play minecraft now
+
+im back from minecraft, time to code
+the sky is dark
+now that i think of it, when was the last time i started on a non-platformer game
+when was the last time i started a game at all
+its been so long that i forgot
+then again, my memory's quite bad
+also if i had to write an essay showing my development process, im gon be real thankful for this.
+devlog > diary 
+im switching my font back; comic mono is pretty good and all, but its time to go
+one day ima write so much that tabnine and my editor can train themselves and write the log for me.
+rn its helping me a lot when i code
+(if you dont know what tabnine is, its a extension for vscode that autocompletes for you, and its helping me a lot)
+just switched, back to comic mono i go
+anyway where was I
+
+changed bg to a slightly more greenish color
+the player is now white
+added enemy class, its red #FF7777
+
+just realised theres no cs in ib afaik
+which means i have to study cs myself
+yaaaaaaay...
+
+im back
+my laptops on 34%
+how long has it been
+ive lost track of time
+ITS 19:38 
+im at a loss of words
+anyway
+
+enemy shows up on screen
+it can target nearest player now
+(i hope, i havent added another player yet...)
+enemy renders infront of player, fixed!
+now it renders behind
+it already has the feel of a game i made for a school project back in year 9
+that was a space shooter, you moved around and rocks spawned around the map and tried to crash into you
+(tabnine suggested "your house" instead of "you" lololololololollllllllllllllll)
+tbh i dont think future entries would be as detailed as this
+mainly cuz now i have 5+ hrs of nonstop coding yaey
+should i put a warning on top to show that this log contains opinions
+that was not a question. i just did.
+tbf all i gotta do is correct the grammar, fix the paragraphs and im done
+not gon say writing this log improves writing skills tho, im just documenting stuff
+
+i used the bg pic, finally
+prob should start a local commit now

@@ -91,17 +91,32 @@ const images = {
 }
 
 
+function newWeapon (type_,onAttack_ = (level) => {}){
+    class Weapon {
+        constructor(){
+            this.type = type_;
+            this.onAttack = onAttack_
+        }
+    }
 
+    return Weapon;
+}
+
+const Pistol = newWeapon("Pistol",function(level){
+    //tmp
+    console.log("hi uwu");
+});
 
 class Player {
     //this is a player. 
-    constructor(x,y,width=32,height=32,color = "#FFFFFF"){
+    constructor(x,y,width=32,height=32,color = "#FFFFFF",weapon = new Pistol){
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.color = color;
         this.speed = 10;
+        this.weapon = weapon;
     }
 
     tick(level=lvl){
@@ -114,6 +129,7 @@ class Player {
         level.ctx.fillRect(this.x,this.y,this.width,this.height);
     }
 }
+
 
 class Enemy {
     constructor(x,y,width=32,height=32,color = "#FF7777"){
@@ -137,6 +153,8 @@ class Enemy {
         level.ctx.fillRect(this.x,this.y,this.width,this.height);
     }
 }
+
+
 class Level {
     constructor(name = "Untitled",canvas_ = canvas){
         this.name = name;//idk what to do with this

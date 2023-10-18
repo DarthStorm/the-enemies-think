@@ -102,14 +102,20 @@ function newWeapon (type_,onAttack_ = (level) => {}){
     return Weapon;
 }
 
-const Pistol = newWeapon("Pistol",function(level){
-    //tmp
-    console.log("hi uwu");
-});
+const WEAPONS = {
+    //weapons
+    Pistol:newWeapon("Pistol",function(level){
+        //tmp
+        console.log("hi uwu");
+    }),
+
+    
+};
+
 
 class Player {
     //this is a player. 
-    constructor(x,y,width=32,height=32,color = "#FFFFFF",weapon = new Pistol){
+    constructor(x,y,width=32,height=32,color = "#FFFFFF",weapon = new WEAPONS.Pistol){
         this.x = x;
         this.y = y;
         this.width = width;

@@ -102,11 +102,10 @@ const images = {
 }
 
 
-function newWeapon(type_ = "", onAttack_ = (player) => {
-    if(typeof player == player) {
-        // level.projectiles.push(new Projectile());
-    }
-}) {
+function newWeapon(type_ = "", onAttack_ = (player,level,direction) => {
+    if(typeof level == Level) {
+        level.projectiles.push(new Projectile(player,player.x,player.y,type_,direction));
+    }}) {
 
     const Weapon = {
         type: type_,
@@ -118,7 +117,7 @@ function newWeapon(type_ = "", onAttack_ = (player) => {
 
 const WEAPONS = {
     //weapons
-    Pistol: newWeapon("Pistol", function(level) {
+    Pistol: newWeapon("Pistol", function(player,level) {
         //tmp
         console.log("hi uwu");
     }),
@@ -137,11 +136,21 @@ class Player {
         this.color = color;
         this.speed = 10;
         this.weapon = weapon;
+
+        this.attackCooldown = 0;
+        this.direction = 0;
     }
 
     tick(level = lvl) {
+        this.attackCooldown -= 1
         this.x += (level.controls.right - level.controls.left) * this.speed;
         this.y += (level.controls.down - level.controls.up) * this.speed;
+        this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width/2), - (level.controls.mousePosition.y - (this.y + this.height/2)) )*(180 / Math.PI)
+        
+        if (level.controls.shoot && this.attackCooldown <= 0) {
+            this.weapon.onAttack(this,level);
+            this.attackCooldown = 10;
+        }
     }
     draw(level = lvl) {
         //draw player
@@ -176,8 +185,9 @@ class Enemy {
 }
 
 class Projectile {
-    constructor(x, y, type, direction, width, height, color) {
+    constructor(owner,x, y, type, direction, width, height, color) {
         //in future add a object ot keep track of ALL these features to better spawn bullets
+        this.owner = owner;
         this.x = x;
         this.y = y;
         this.type = type;

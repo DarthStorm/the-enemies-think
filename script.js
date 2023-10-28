@@ -67,6 +67,10 @@ like +10 atk, +30% fire rate, + 5 hp, + health regen every 4 secs
 (enemies can stop hp regen)
 
 they think after 2 mins
+
+also all this is subject to change (duh)
+this is a concept with potential
+i hope
 */
 
 const canvas = document.createElement('canvas');
@@ -81,6 +85,14 @@ const allControls = {
 
 };
 
+const mouse = {
+    down:false,
+    position:{
+        x:0,
+        y:0
+    }
+}
+
 function loadImage(src = "") {
     let x = new Image();
     x.src = "assets/" + src;
@@ -91,12 +103,15 @@ const images = {
 }
 
 
-function newWeapon (type_,onAttack_ = (level) => {}){
-    class Weapon {
-        constructor(){
-            this.type = type_;
-            this.onAttack = onAttack_
-        }
+function newWeapon (type_="",onAttack_ = (player) => {
+    if (typeof player == player) {
+        level.projectiles.push(new Projectile());
+    }
+}){
+
+    const Weapon = {
+        type:type_,
+        onAttack:onAttack_
     }
 
     return Weapon;
@@ -115,7 +130,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x,y,width=32,height=32,color = "#FFFFFF",weapon = new WEAPONS.Pistol){
+    constructor(x,y,width=32,height=32,color = "#FFFFFF",weapon = WEAPONS.Pistol){
         this.x = x;
         this.y = y;
         this.width = width;
@@ -148,10 +163,11 @@ class Enemy {
     }
 
     tick(level=lvl){
-        var playersSorted = level.players.concat() // maxes a new array. but HOW
+        var playersSorted = level.players.concat() // makes a new array. but HOW
         playersSorted.sort(function(a,b){
             return Math.sqrt((b.x - this.x) ** 2 + (b.y - this.y) ** 2) - Math.sqrt((a.x - this.x) ** 2 + (a.y - this.y) ** 2) 
         });
+
     }
 
     draw(level=lvl){
@@ -160,6 +176,30 @@ class Enemy {
     }
 }
 
+class Projectile {
+    constructor(x,y,type,direction,width,height,color){
+        //in future add a object ot keep track of ALL these features to better spawn bullets
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.direction = direction
+        
+        this.width = width;
+        this.height = height;
+        this.speed = speed;
+        this.color = color;
+    }
+    
+    tick(level=lvl){
+        this.x += Math.sin(this.direction)*5;
+        this.y -= Math.cos(this.direction)*5;
+    }
+
+    draw(level=lvl){
+        level.ctx.fillStyle = this.color;
+        level.ctx.fillRect(this.x,this.y,this.width,this.height);
+    }
+}
 
 class Level {
     constructor(name = "Untitled",canvas_ = canvas){
@@ -176,11 +216,20 @@ class Level {
         //test
         this.enemies.push(new Enemy(100,100,32,32));
 
+        this.projectiles = []
+
         this.controls = {
             up:false,
             down:false,
             left:false,
-            right:false
+            right:false,
+            shoot:false,
+
+            mousePosition:{
+                x:0,
+                y:0,
+            },
+
         }
     }
     getControls(){
@@ -228,6 +277,7 @@ function draw(){
 function loop(){
     tick();
     draw();
+    console.log(mouse,mouse.position);
 }
 
 function addEventListeners(){
@@ -237,6 +287,18 @@ function addEventListeners(){
     document.addEventListener("keyup", function(e){
         allControls[e.key] = false;
     })
+    document.addEventListener("mousedown", function(e){
+        mouse.down = true;
+    });
+    document.addEventListener("mouseup", function(e){
+        mouse.down = false;
+    });
+    document.addEventListener("mousemove", function(e){
+        mouse.position.x = e.offsetX;
+        mouse.position.y = e.offsetY;
+    });
+
+
 }
 
 window.onload = () => {
@@ -244,4 +306,5 @@ window.onload = () => {
     document.body.appendChild(canvas);
     setInterval(loop,30);
     console.log(canvas);
+    
 }

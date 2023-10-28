@@ -105,7 +105,7 @@ const images = {
 
 function newWeapon (type_="",onAttack_ = (player) => {
     if (typeof player == player) {
-        level.projectiles.push(new Projectile());
+        // level.projectiles.push(new Projectile());
     }
 }){
 

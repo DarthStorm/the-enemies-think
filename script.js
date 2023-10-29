@@ -146,7 +146,7 @@ class Player {
         this.x += (level.controls.right - level.controls.left) * this.speed;
         this.y += (level.controls.down - level.controls.up) * this.speed;
         this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width/2), - (level.controls.mousePosition.y - (this.y + this.height/2)) )*(180 / Math.PI)
-        
+        console.log(level.controls);
         if (level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this,level);
             this.attackCooldown = 10;
@@ -246,6 +246,7 @@ class Level {
         this.controls.down = (allControls["s"] || allControls["ArrowDown"]) ?? false;
         this.controls.left = (allControls["a"] || allControls["ArrowLeft"]) ?? false;
         this.controls.right = (allControls["d"] || allControls["ArrowRight"]) ?? false;
+        this.controls.shoot = (allControls[" "] || mouse.down) ?? false;
     }
     tick() {
         this.getControls()
@@ -286,7 +287,6 @@ function draw() {
 function loop() {
     tick();
     draw();
-    console.log(mouse, mouse.position);
 }
 
 function addEventListeners() {
@@ -314,6 +314,5 @@ window.onload = () => {
     addEventListeners()
     document.body.appendChild(canvas);
     setInterval(loop, 30);
-    console.log(canvas);
 
 }

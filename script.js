@@ -104,7 +104,7 @@ const images = {
 
 function newWeapon(type_ = "", onAttack_ = (player,level,direction) => {
     if(typeof level == Level) {
-        level.projectiles.push(new Projectile(player,player.x,player.y,type_,direction));
+        level.projectiles.push(new Projectile(player,player.x+player.width/2,player.y+player.height/2,type_,direction));
     }}) {
 
     const Weapon = {
@@ -119,7 +119,7 @@ const WEAPONS = {
     //weapons
     Pistol: newWeapon("Pistol", function(player,level) {
         //tmp
-        console.log("hi uwu");
+        level.projectiles.push(new Projectile(player,player.x+player.width/2,player.y+player.height/2,"test",player.direction,));
     }),
 
 
@@ -145,11 +145,12 @@ class Player {
         this.attackCooldown -= 1
         this.x += (level.controls.right - level.controls.left) * this.speed;
         this.y += (level.controls.down - level.controls.up) * this.speed;
-        this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width/2), - (level.controls.mousePosition.y - (this.y + this.height/2)) )*(180 / Math.PI)
-        console.log(level.controls);
+        console.log(level.controls.mousePosition);
+        //point towards cursor
+        this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width/2), - (level.controls.mousePosition.y - (this.y + this.height/2)) )
         if (level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this,level);
-            this.attackCooldown = 10;
+            this.attackCooldown = 1;
         }
     }
     draw(level = lvl) {
@@ -161,11 +162,12 @@ class Player {
 
 
 class Enemy {
-    constructor(x, y, width = 32, height = 32, color = "#FF7777") {
+    constructor(x, y, width = 32, height = 32, direction = 0, color = "#FF7777") {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.direction = direction
         this.color = color;
         this.speed = 5;
     }
@@ -173,8 +175,14 @@ class Enemy {
     tick(level = lvl) {
         var playersSorted = level.players.concat() // makes a new array. but HOW
         playersSorted.sort(function(a, b) {
+            // when the math isnt mathing, question these long lines of math
             return Math.sqrt((b.x - this.x) ** 2 + (b.y - this.y) ** 2) - Math.sqrt((a.x - this.x) ** 2 + (a.y - this.y) ** 2)
         });
+
+        this.direction = Math.atan2(playersSorted[0].x - (this.x), - (playersSorted[0].y - (this.y)) )
+        
+        this.x += Math.sin(this.direction) * 3;
+        this.y -= Math.cos(this.direction) * 3;
 
     }
 
@@ -185,7 +193,7 @@ class Enemy {
 }
 
 class Projectile {
-    constructor(owner,x, y, type, direction, width, height, color) {
+    constructor(owner,x, y, type, direction, width=8, height=8, speed=10, color="#7777FF") {
         //in future add a object ot keep track of ALL these features to better spawn bullets
         this.owner = owner;
         this.x = x;
@@ -200,8 +208,8 @@ class Projectile {
     }
 
     tick(level = lvl) {
-        this.x += Math.sin(this.direction) * 5;
-        this.y -= Math.cos(this.direction) * 5;
+        this.x += Math.sin(this.direction) * 20;
+        this.y -= Math.cos(this.direction) * 20;
     }
 
     draw(level = lvl) {
@@ -242,11 +250,13 @@ class Level {
         }
     }
     getControls() {
-        this.controls.up = (allControls["w"] || allControls["ArrowUp"]) ?? false;
-        this.controls.down = (allControls["s"] || allControls["ArrowDown"]) ?? false;
-        this.controls.left = (allControls["a"] || allControls["ArrowLeft"]) ?? false;
-        this.controls.right = (allControls["d"] || allControls["ArrowRight"]) ?? false;
+        this.controls.up = (allControls["w"] || allControls["W"] ||allControls["ArrowUp"]) ?? false;
+        this.controls.down = (allControls["s"] || allControls["S"] ||allControls["ArrowDown"]) ?? false;
+        this.controls.left = (allControls["a"] || allControls["A"] ||allControls["ArrowLeft"]) ?? false;
+        this.controls.right = (allControls["d"] || allControls["D"] ||allControls["ArrowRight"]) ?? false;
         this.controls.shoot = (allControls[" "] || mouse.down) ?? false;
+
+        this.controls.mousePosition = mouse.position;
     }
     tick() {
         this.getControls()
@@ -257,6 +267,10 @@ class Level {
         //tick enemies
         for(let e = 0; e < this.enemies.length; e++) {
             this.enemies[e].tick();
+        }
+
+        for(let pr = 0; pr < this.projectiles.length; pr++) {
+            this.projectiles[pr].tick()
         }
     }
     draw() {
@@ -269,6 +283,10 @@ class Level {
         //draw enemies
         for(let p = 0; p < this.players.length; p++) {
             this.players[p].draw()
+        }
+
+        for(let pr = 0; pr < this.projectiles.length; pr++) {
+            this.projectiles[pr].draw()
         }
     }
 }
@@ -305,6 +323,7 @@ function addEventListeners() {
     document.addEventListener("mousemove", function(e) {
         mouse.position.x = e.offsetX;
         mouse.position.y = e.offsetY;
+        
     });
 
 

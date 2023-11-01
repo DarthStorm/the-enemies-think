@@ -101,11 +101,9 @@ const images = {
     bg: loadImage("bg.png")
 }
 
-
 function newWeapon(type_ = "", onAttack_ = (player,level,direction) => {
-    if(typeof level == Level) {
-        level.projectiles.push(new Projectile(player,player.x+player.width/2,player.y+player.height/2,type_,direction));
-    }}) {
+        level.projectiles.push(new Projectile(player,player.x+player.width/2,player.y+player.height/2,type_,player.direction,));
+    }) {
 
     const Weapon = {
         type: type_,
@@ -117,13 +115,12 @@ function newWeapon(type_ = "", onAttack_ = (player,level,direction) => {
 
 const WEAPONS = {
     //weapons
-    Pistol: newWeapon("Pistol", function(player,level) {
-        //tmp
-        level.projectiles.push(new Projectile(player,player.x+player.width/2,player.y+player.height/2,"test",player.direction,));
-    }),
+    Pistol: newWeapon("Pistol"),
 
 
 };
+
+
 
 
 class Player {
@@ -150,7 +147,7 @@ class Player {
         this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width/2), - (level.controls.mousePosition.y - (this.y + this.height/2)) )
         if (level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this,level);
-            this.attackCooldown = 1;
+            this.attackCooldown = 12;
         }
     }
     draw(level = lvl) {
@@ -159,7 +156,6 @@ class Player {
         level.ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 }
-
 
 class Enemy {
     constructor(x, y, width = 32, height = 32, direction = 0, color = "#FF7777") {
@@ -194,7 +190,6 @@ class Enemy {
 
 class Projectile {
     constructor(owner,x, y, type, direction, width=8, height=8, speed=10, color="#7777FF") {
-        //in future add a object ot keep track of ALL these features to better spawn bullets
         this.owner = owner;
         this.x = x;
         this.y = y;
@@ -205,9 +200,14 @@ class Projectile {
         this.height = height;
         this.speed = speed;
         this.color = color;
+
+        this.frame = 0;
+
+
     }
 
     tick(level = lvl) {
+        this.frame += 1;
         this.x += Math.sin(this.direction) * 20;
         this.y -= Math.cos(this.direction) * 20;
     }

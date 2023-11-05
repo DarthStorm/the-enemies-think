@@ -101,13 +101,40 @@ const images = {
     bg: loadImage("bg.png")
 }
 
-function newWeapon(type_ = "", onAttack_ = (player, level, direction) => {
-    level.projectiles.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction, ));
-}) {
+function newWeapon(type_ = "", baseProjectile = {
+    count: 1,
+    spread: 0,
+    damage: 10,
+    range:50
+
+}, baseStats = {
+    fireRate: 12,
+}, onAttack_ = undefined) {
 
     const Weapon = {
         type: type_,
-        onAttack: onAttack_
+        projectile: baseProjectile,
+        stats: baseStats,
+        positionProjectiles: function (player, count = this.projectile.count, spread = this.projectile.spread, damage = this.projectile.damage,range = this.projectile.range) {
+            if (count == 1) {
+                //hardcoded, as everything else seems to have issues
+                return [new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction,damage,range)];
+            }
+            let res = [];
+            let spreadPerBullet = spread / (count-1);
+            let baseDirection = player.direction - spread/2
+            for(let i = 0; i < count; i++) {
+                res.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, baseDirection + spreadPerBullet * i,damage,range));
+            }
+            return res;
+        },
+        onAttack: onAttack_ ?? function (player, level, direction) {
+            this.projectileList = this.positionProjectiles(player, this.projectile.count, this.projectile.spread)
+            for(let pr = 0; pr < this.projectileList.length; pr++) {
+                level.projectiles.push(this.projectileList[pr]);
+
+            }
+        },
     }
 
     return Weapon;
@@ -116,12 +143,23 @@ function newWeapon(type_ = "", onAttack_ = (player, level, direction) => {
 const WEAPONS = {
     //weapons
     Pistol: newWeapon("Pistol"),
+    Shotgun: newWeapon("Shotgun", baseProjectile = {
+        count: 4,
+        spread: 0.4,
+        damage: 7,
+        range:20,
+        speed:10
+    },
+    baseStats={
+        fireRate: 18,
+    }),
+    
 
 };
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, color = "#FFFFFF", weapon = WEAPONS.Pistol, maxhealth = 100) {
+    constructor(x, y, width = 32, height = 32, color = "#FFFFFF", weapon = WEAPONS.Shotgun, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -142,12 +180,11 @@ class Player {
         this.attackCooldown -= 1;
         this.x += (level.controls.right - level.controls.left) * this.speed;
         this.y += (level.controls.down - level.controls.up) * this.speed;
-        console.log(level.controls.mousePosition);
         //point towards cursor
         this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width / 2), -(level.controls.mousePosition.y - (this.y + this.height / 2)))
         if(level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this, level);
-            this.attackCooldown = 12;
+            this.attackCooldown = this.weapon.stats.fireRate;
         }
     }
     draw(level = lvl) {
@@ -221,7 +258,7 @@ class Enemy {
 }
 
 class Projectile {
-    constructor(owner, x, y, type, direction, width = 8, height = 8, speed = 10, color = "#7777FF", damage = 10) {
+    constructor(owner, x, y, type, direction, damage = 10, range=50, width = 8, height = 8, speed = 10, color = "#7777FF", ) {
         this.owner = owner;
         this.x = x;
         this.y = y;
@@ -229,11 +266,12 @@ class Projectile {
         this.direction = direction
         this.frame = 0;
 
+        this.damage = damage;
+        this.range = range;
         this.width = width;
         this.height = height;
         this.speed = speed;
         this.color = color;
-        this.damage = damage;
 
         this.active = true;
     }
@@ -252,6 +290,10 @@ class Projectile {
                 this.active = false;
             }
 
+        }
+
+        if(this.frame > this.range) {
+            this.active = false;
         }
     }
 

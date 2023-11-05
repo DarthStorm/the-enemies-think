@@ -172,3 +172,9 @@ bros making game in roblox studio cuz documentation/tutorials
 so today i started a despawn system
 also fixed my personal project thing
 kk i commit now
+
+day 46 5/11/23
+health system time!
+added health variable
+added active variable, Array.filter() removes stuff that are not active
+lets go im finished, thought it might be way harder

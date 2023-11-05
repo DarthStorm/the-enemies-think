@@ -101,9 +101,9 @@ const images = {
     bg: loadImage("bg.png")
 }
 
-function newWeapon(type_ = "", onAttack_ = (player,level,direction) => {
-        level.projectiles.push(new Projectile(player,player.x+player.width/2,player.y+player.height/2,type_,player.direction,));
-    }) {
+function newWeapon(type_ = "", onAttack_ = (player, level, direction) => {
+    level.projectiles.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction, ));
+}) {
 
     const Weapon = {
         type: type_,
@@ -117,15 +117,11 @@ const WEAPONS = {
     //weapons
     Pistol: newWeapon("Pistol"),
 
-
 };
-
-
-
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, color = "#FFFFFF", weapon = WEAPONS.Pistol) {
+    constructor(x, y, width = 32, height = 32, color = "#FFFFFF", weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -133,20 +129,24 @@ class Player {
         this.color = color;
         this.speed = 10;
         this.weapon = weapon;
+        this.maxhealth = maxhealth;
 
         this.attackCooldown = 0;
         this.direction = 0;
+        this.health = this.maxhealth;
+
+        this.active = true;
     }
 
     tick(level = lvl) {
-        this.attackCooldown -= 1
+        this.attackCooldown -= 1;
         this.x += (level.controls.right - level.controls.left) * this.speed;
         this.y += (level.controls.down - level.controls.up) * this.speed;
         console.log(level.controls.mousePosition);
         //point towards cursor
-        this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width/2), - (level.controls.mousePosition.y - (this.y + this.height/2)) )
-        if (level.controls.shoot && this.attackCooldown <= 0) {
-            this.weapon.onAttack(this,level);
+        this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width / 2), -(level.controls.mousePosition.y - (this.y + this.height / 2)))
+        if(level.controls.shoot && this.attackCooldown <= 0) {
+            this.weapon.onAttack(this, level);
             this.attackCooldown = 12;
         }
     }
@@ -155,30 +155,51 @@ class Player {
         level.ctx.fillStyle = this.color;
         level.ctx.fillRect(this.x, this.y, this.width, this.height);
     }
+    takeDamage(damage) {
+        //This function is called from the enemies (and enemy bullets), since I don't want another tick loop
+        //Deducts HP and kills if hp <= 0
+        this.health -= damage;
+        if(this.health <= 0) {
+            //get all declarations of this.active before drawing
+            this.active = false;
+            this.gameOver();
+        }
+
+    }
+
+    gameOver(level = lvl) {
+        //placeholder function
+    }
 }
 
 class Enemy {
-    constructor(x, y, width = 32, height = 32, direction = 0, color = "#FF7777") {
+    constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40, color = "#FF7777") {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.direction = direction
         this.color = color;
+        this.maxhealth = maxhealth;
         this.speed = 5;
+        this.health = this.maxhealth;
+
+        this.active = true;
     }
 
     tick(level = lvl) {
         var playersSorted = level.players.concat() // makes a new array. but HOW
-        playersSorted.sort(function(a, b) {
-            // when the math isnt mathing, question these long lines of math
+        playersSorted.sort(function (a, b) {
+            // dist between 2 points
             return Math.sqrt((b.x - this.x) ** 2 + (b.y - this.y) ** 2) - Math.sqrt((a.x - this.x) ** 2 + (a.y - this.y) ** 2)
         });
 
-        this.direction = Math.atan2(playersSorted[0].x - (this.x), - (playersSorted[0].y - (this.y)) )
-        
+        this.direction = Math.atan2(playersSorted[0].x - (this.x), -(playersSorted[0].y - (this.y)))
+
         this.x += Math.sin(this.direction) * 3;
         this.y -= Math.cos(this.direction) * 3;
+
+        //take damage
 
     }
 
@@ -186,30 +207,52 @@ class Enemy {
         level.ctx.fillStyle = this.color;
         level.ctx.fillRect(this.x, this.y, this.width, this.height);
     }
+
+    takeDamage(damage) {
+        //This function is called from the projectiles, since I don't want another tick loop
+        //Deducts HP and kills if hp <= 0
+        this.health -= damage;
+        if(this.health <= 0) {
+            //get all declarations of this.active before drawing
+            this.active = false;
+        }
+
+    }
 }
 
 class Projectile {
-    constructor(owner,x, y, type, direction, width=8, height=8, speed=10, color="#7777FF") {
+    constructor(owner, x, y, type, direction, width = 8, height = 8, speed = 10, color = "#7777FF", damage = 10) {
         this.owner = owner;
         this.x = x;
         this.y = y;
         this.type = type;
         this.direction = direction
+        this.frame = 0;
 
         this.width = width;
         this.height = height;
         this.speed = speed;
         this.color = color;
+        this.damage = damage;
 
-        this.frame = 0;
-
-
+        this.active = true;
     }
 
     tick(level = lvl) {
         this.frame += 1;
         this.x += Math.sin(this.direction) * 20;
         this.y -= Math.cos(this.direction) * 20;
+
+        for(let e = 0; e < level.enemies.length; e++) {
+            const enemy = level.enemies[e];
+
+            if(this.x > enemy.x && this.x < enemy.x + enemy.width && this.y > enemy.y && this.y < enemy.y + enemy.height) {
+                //deletes both sprites
+                enemy.takeDamage(this.damage);
+                this.active = false;
+            }
+
+        }
     }
 
     draw(level = lvl) {
@@ -226,12 +269,12 @@ class Level {
 
         this.players = [];
 
-        this.players.push(new Player(0, 0, 32, 32));
+        this.players.push(new Player(500, 500, 32, 32));
 
         this.enemies = [];
 
         //test
-        this.enemies.push(new Enemy(100, 100, 32, 32));
+        this.enemies.push(new Enemy(0, 0, 32, 32));
 
         this.projectiles = []
 
@@ -250,10 +293,10 @@ class Level {
         }
     }
     getControls() {
-        this.controls.up = (allControls["w"] || allControls["W"] ||allControls["ArrowUp"]) ?? false;
-        this.controls.down = (allControls["s"] || allControls["S"] ||allControls["ArrowDown"]) ?? false;
-        this.controls.left = (allControls["a"] || allControls["A"] ||allControls["ArrowLeft"]) ?? false;
-        this.controls.right = (allControls["d"] || allControls["D"] ||allControls["ArrowRight"]) ?? false;
+        this.controls.up = (allControls["w"] || allControls["W"] || allControls["ArrowUp"]) ?? false;
+        this.controls.down = (allControls["s"] || allControls["S"] || allControls["ArrowDown"]) ?? false;
+        this.controls.left = (allControls["a"] || allControls["A"] || allControls["ArrowLeft"]) ?? false;
+        this.controls.right = (allControls["d"] || allControls["D"] || allControls["ArrowRight"]) ?? false;
         this.controls.shoot = (allControls[" "] || mouse.down) ?? false;
 
         this.controls.mousePosition = mouse.position;
@@ -261,16 +304,19 @@ class Level {
     tick() {
         this.getControls()
         //tick players
-        for(let p = 0; p < this.players.length; p++) {
-            this.players[p].tick();
+        this.players = this.players.filter(player => player.active);
+        for(let player = 0; player < this.players.length; player++) {
+            this.players[player].tick();
         }
         //tick enemies
-        for(let e = 0; e < this.enemies.length; e++) {
-            this.enemies[e].tick();
+        this.enemies = this.enemies.filter(enemy => enemy.active);
+        for(let enemy = 0; enemy < this.enemies.length; enemy++) {
+            this.enemies[enemy].tick();
         }
 
-        for(let pr = 0; pr < this.projectiles.length; pr++) {
-            this.projectiles[pr].tick()
+        this.projectiles = this.projectiles.filter(projectile => projectile.active);
+        for(let projectiles = 0; projectiles < this.projectiles.length; projectiles++) {
+            this.projectiles[projectiles].tick()
         }
     }
     draw() {
@@ -291,7 +337,6 @@ class Level {
     }
 }
 
-
 const lvl = new Level("Level 1", canvas);
 
 function tick() {
@@ -308,24 +353,23 @@ function loop() {
 }
 
 function addEventListeners() {
-    document.addEventListener("keydown", function(e) {
+    document.addEventListener("keydown", function (e) {
         allControls[e.key] = true;
     })
-    document.addEventListener("keyup", function(e) {
+    document.addEventListener("keyup", function (e) {
         allControls[e.key] = false;
     })
-    document.addEventListener("mousedown", function(e) {
+    document.addEventListener("mousedown", function (e) {
         mouse.down = true;
     });
-    document.addEventListener("mouseup", function(e) {
+    document.addEventListener("mouseup", function (e) {
         mouse.down = false;
     });
-    document.addEventListener("mousemove", function(e) {
+    document.addEventListener("mousemove", function (e) {
         mouse.position.x = e.offsetX;
         mouse.position.y = e.offsetY;
-        
-    });
 
+    });
 
 }
 

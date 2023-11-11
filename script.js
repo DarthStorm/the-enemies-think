@@ -142,6 +142,17 @@ function newWeapon(type_ = "", baseProjectile = {
 
 const WEAPONS = {
     //weapons
+
+    OPTest: newWeapon("OPTest", baseProjectile = {
+        count:100,
+        spread: 1,
+        damage: 100,
+        range: 100
+    },baseStats={
+        fireRate: 5,
+    }),
+
+    //normal weapons
     Pistol: newWeapon("Pistol"),
     Shotgun: newWeapon("Shotgun", baseProjectile = {
         count: 4,
@@ -318,6 +329,8 @@ class Level {
         //test
         this.enemies.push(new Enemy(0, 0, 32, 32));
 
+        this.enemyspawntimer = 0;
+
         this.projectiles = []
 
         this.controls = {
@@ -343,14 +356,37 @@ class Level {
 
         this.controls.mousePosition = mouse.position;
     }
+    
+    spawnEnemy() {
+        let dist = (width>height?width:height)/2;
+        console.log(dist);
+        //generate random angle
+        let deg = Math.random()*Math.PI*2
+        //use math: x = r × cos( θ ) y = r × sin( θ )
+        //focus on P1 for now, although in future might use the middle of screen
+        let basePos = {x:this.players[0].x,y:this.players[0].y};
+        this.enemies.push(new Enemy(basePos.x + dist*Math.cos(deg),basePos.y + dist*Math.sin(deg),32,32))
+
+    }
+
     tick() {
         this.getControls()
-        //tick players
+
+        // level tick:
+        // enemy spawning
+        this.enemyspawntimer -= 1
+        if (this.enemyspawntimer <= 0) {
+            this.enemyspawntimer = 100
+            this.spawnEnemy()
+        }
+
+
+        // tick players
         this.players = this.players.filter(player => player.active);
         for(let player = 0; player < this.players.length; player++) {
             this.players[player].tick();
         }
-        //tick enemies
+        // tick enemies
         this.enemies = this.enemies.filter(enemy => enemy.active);
         for(let enemy = 0; enemy < this.enemies.length; enemy++) {
             this.enemies[enemy].tick();

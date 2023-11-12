@@ -97,7 +97,7 @@ function loadImage(src = "") {
     x.src = "assets/" + src;
     return x;
 }
-const images = {
+const TEXTURES = {
     bg: loadImage("bg.png"),
     player:{
         idle:loadImage("player.png"),
@@ -183,12 +183,12 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, color = "#FFFFFF", weapon = WEAPONS.Pistol, maxhealth = 100) {
+    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.color = color;
+        this.texture = texture;
         this.speed = 10;
         this.weapon = weapon;
         this.maxhealth = maxhealth;
@@ -213,8 +213,7 @@ class Player {
     }
     draw(level = lvl) {
         //draw player
-        level.ctx.fillStyle = this.color;
-        level.ctx.fillRect(this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
     }
     takeDamage(damage) {
         //This function is called from the enemies (and enemy bullets), since I don't want another tick loop
@@ -234,13 +233,13 @@ class Player {
 }
 
 class Enemy {
-    constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40, color = "#FF7777") {
+    constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40, texture = TEXTURES.enemy.basic) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.direction = direction
-        this.color = color;
+        this.texture = texture;
         this.maxhealth = maxhealth;
         this.speed = 5;
         this.health = this.maxhealth;
@@ -265,8 +264,7 @@ class Enemy {
     }
 
     draw(level = lvl) {
-        level.ctx.fillStyle = this.color;
-        level.ctx.fillRect(this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
     }
 
     takeDamage(damage,level = lvl) {
@@ -282,12 +280,12 @@ class Enemy {
 
     onDeath(level=lvl){
         this.active = false;
-        level.collectibles.push(new Collectible(this.x,this.y,16,16,"00FFFF"))
+        level.collectibles.push(new Collectible(this.x,this.y,16,16,TEXTURES.collectible.coin))
     }
 }
 
 class Projectile {
-    constructor(owner, x, y, type, direction, damage = 10, range=50, width = 8, height = 8, speed = 10, color = "#7777FF", ) {
+    constructor(owner, x, y, type, direction, damage = 10, range=50, width = 8, height = 8, speed = 10, texture = TEXTURES.projectile.playerbullet, ) {
         this.owner = owner;
         this.x = x;
         this.y = y;
@@ -300,7 +298,7 @@ class Projectile {
         this.width = width;
         this.height = height;
         this.speed = speed;
-        this.color = color;
+        this.texture = texture;
 
         this.active = true;
     }
@@ -327,18 +325,17 @@ class Projectile {
     }
 
     draw(level = lvl) {
-        level.ctx.fillStyle = this.color;
-        level.ctx.fillRect(this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
     }
 }
 
 class Collectible {
-    constructor(x, y, width = 16, height = 16, color = "#ABCDEF") {
+    constructor(x, y, width = 16, height = 16, texture = TEXTURES.collectible.coin) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.color = color;
+        this.texture = texture;
         this.speed = 5;
 
         this.active = true;
@@ -349,8 +346,7 @@ class Collectible {
     }
 
     draw(level = lvl) {
-        level.ctx.fillStyle = this.color;
-        level.ctx.fillRect(this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
     }
 }
 
@@ -359,10 +355,13 @@ class Level {
         this.name = name; //idk what to do with this
         this.canvas = canvas_;
         this.ctx = canvas.getContext('2d');
+        //fix this only if needed
+        this.ctx.contextSmoothingEnabled = false;
+        this.ctx.mozImageSmoothingEnabled = false; 
 
         this.players = [];
 
-        this.players.push(new Player(500, 500, 32, 32));
+        this.players.push(new Player(width/2, height/2, 32, 32));
 
         this.enemies = [];
 
@@ -449,7 +448,7 @@ class Level {
     }
     draw() {
         //draw bg
-        this.ctx.drawImage(images.bg, 0, 0)
+        this.ctx.drawImage(TEXTURES.bg, 0, 0)
 
         for(let enemy = 0; enemy < this.enemies.length; enemy++) {
             this.enemies[enemy].draw()

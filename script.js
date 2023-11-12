@@ -98,7 +98,20 @@ function loadImage(src = "") {
     return x;
 }
 const images = {
-    bg: loadImage("bg.png")
+    bg: loadImage("bg.png"),
+    player:{
+        idle:loadImage("player.png"),
+    },
+    enemy:{
+        //change later
+        basic:loadImage("enemy.png"),
+    },
+    projectile:{
+        playerbullet:loadImage("playerbullet.png"),
+    },
+    collectible:{
+        coin:loadImage("coin.png")
+    },
 }
 
 function newWeapon(type_ = "", baseProjectile = {
@@ -128,7 +141,7 @@ function newWeapon(type_ = "", baseProjectile = {
             }
             return res;
         },
-        onAttack: onAttack_ ?? function (player, level, direction) {
+        onAttack: onAttack_ ?? function (player, level) {
             this.projectileList = this.positionProjectiles(player, this.projectile.count, this.projectile.spread)
             for(let pr = 0; pr < this.projectileList.length; pr++) {
                 level.projectiles.push(this.projectileList[pr]);
@@ -170,7 +183,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, color = "#FFFFFF", weapon = WEAPONS.Shotgun, maxhealth = 100) {
+    constructor(x, y, width = 32, height = 32, color = "#FFFFFF", weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -256,15 +269,20 @@ class Enemy {
         level.ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 
-    takeDamage(damage) {
+    takeDamage(damage,level = lvl) {
         //This function is called from the projectiles, since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
         this.health -= damage;
         if(this.health <= 0) {
             //get all declarations of this.active before drawing
-            this.active = false;
+            this.onDeath(level)
         }
 
+    }
+
+    onDeath(level=lvl){
+        this.active = false;
+        level.collectibles.push(new Collectible(this.x,this.y,16,16,"00FFFF"))
     }
 }
 
@@ -314,6 +332,28 @@ class Projectile {
     }
 }
 
+class Collectible {
+    constructor(x, y, width = 16, height = 16, color = "#ABCDEF") {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.color = color;
+        this.speed = 5;
+
+        this.active = true;
+    }
+    
+    tick(){
+
+    }
+
+    draw(level = lvl) {
+        level.ctx.fillStyle = this.color;
+        level.ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+}
+
 class Level {
     constructor(name = "Untitled", canvas_ = canvas) {
         this.name = name; //idk what to do with this
@@ -331,7 +371,9 @@ class Level {
 
         this.enemyspawntimer = 0;
 
-        this.projectiles = []
+        this.projectiles = [];
+
+        this.collectibles = [];
 
         this.controls = {
             up: false,
@@ -384,33 +426,43 @@ class Level {
         // tick players
         this.players = this.players.filter(player => player.active);
         for(let player = 0; player < this.players.length; player++) {
-            this.players[player].tick();
+            this.players[player].tick(this);
         }
         // tick enemies
         this.enemies = this.enemies.filter(enemy => enemy.active);
         for(let enemy = 0; enemy < this.enemies.length; enemy++) {
-            this.enemies[enemy].tick();
+            this.enemies[enemy].tick(this);
         }
 
+        // tick projectiles
         this.projectiles = this.projectiles.filter(projectile => projectile.active);
         for(let projectiles = 0; projectiles < this.projectiles.length; projectiles++) {
-            this.projectiles[projectiles].tick()
+            this.projectiles[projectiles].tick(this)
         }
+
+        // tick collectibles
+        this.collectibles = this.collectibles.filter(collectible => collectible.active);
+        for(let collectibles = 0; collectibles < this.collectibles.length; collectibles++) {
+            this.collectibles[collectibles].tick(this)
+        }
+        
     }
     draw() {
         //draw bg
         this.ctx.drawImage(images.bg, 0, 0)
-        //draw players
-        for(let e = 0; e < this.enemies.length; e++) {
-            this.enemies[e].draw()
-        }
-        //draw enemies
-        for(let p = 0; p < this.players.length; p++) {
-            this.players[p].draw()
-        }
 
-        for(let pr = 0; pr < this.projectiles.length; pr++) {
-            this.projectiles[pr].draw()
+        for(let enemy = 0; enemy < this.enemies.length; enemy++) {
+            this.enemies[enemy].draw()
+        }
+        for(let player = 0; player < this.players.length; player++) {
+            this.players[player].draw()
+        }
+        
+        for(let projectile = 0; projectile < this.projectiles.length; projectile++) {
+            this.projectiles[projectile].draw()
+        }
+        for(let collectible = 0; collectible < this.collectibles.length; collectible++) {
+            this.collectibles[collectible].draw()
         }
     }
 }

@@ -99,26 +99,26 @@ function loadImage(src = "") {
 }
 const TEXTURES = {
     bg: loadImage("bg.png"),
-    player:{
-        idle:loadImage("player.png"),
+    player: {
+        idle: loadImage("player.png"),
     },
-    enemy:{
+    enemy: {
         //change later
-        basic:loadImage("enemy.png"),
+        basic: loadImage("enemy.png"),
     },
-    projectile:{
-        playerbullet:loadImage("playerbullet.png"),
+    projectile: {
+        playerbullet: loadImage("playerbullet.png"),
     },
-    collectible:{
-        coin:loadImage("coin.png")
+    collectible: {
+        coin: loadImage("coin.png")
     },
-}
+};
 
 function newWeapon(type_ = "", baseProjectile = {
     count: 1,
     spread: 0,
     damage: 10,
-    range:50
+    range: 50
 
 }, baseStats = {
     fireRate: 12,
@@ -128,22 +128,22 @@ function newWeapon(type_ = "", baseProjectile = {
         type: type_,
         projectile: baseProjectile,
         stats: baseStats,
-        positionProjectiles: function (player, count = this.projectile.count, spread = this.projectile.spread, damage = this.projectile.damage,range = this.projectile.range) {
+        positionProjectiles: function (player, count = this.projectile.count, spread = this.projectile.spread, damage = this.projectile.damage, range = this.projectile.range) {
             if (count == 1) {
                 //hardcoded, as everything else seems to have issues
-                return [new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction,damage,range)];
+                return [new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction, damage, range)];
             }
             let res = [];
-            let spreadPerBullet = spread / (count-1);
-            let baseDirection = player.direction - spread/2
-            for(let i = 0; i < count; i++) {
-                res.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, baseDirection + spreadPerBullet * i,damage,range));
+            let spreadPerBullet = spread / (count - 1);
+            let baseDirection = player.direction - spread / 2;
+            for (let i = 0; i < count; i++) {
+                res.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, baseDirection + spreadPerBullet * i, damage, range));
             }
             return res;
         },
         onAttack: onAttack_ ?? function (player, level) {
-            this.projectileList = this.positionProjectiles(player, this.projectile.count, this.projectile.spread)
-            for(let pr = 0; pr < this.projectileList.length; pr++) {
+            this.projectileList = this.positionProjectiles(player, this.projectile.count, this.projectile.spread);
+            for (let pr = 0; pr < this.projectileList.length; pr++) {
                 level.projectiles.push(this.projectileList[pr]);
 
             }
@@ -157,27 +157,26 @@ const WEAPONS = {
     //weapons
 
     OPTest: newWeapon("OPTest", baseProjectile = {
-        count:100,
+        count: 100,
         spread: 1,
         damage: 100,
         range: 100
-    },baseStats={
+    }, baseStats = {
         fireRate: 5,
     }),
 
     //normal weapons
     Pistol: newWeapon("Pistol"),
     Shotgun: newWeapon("Shotgun", baseProjectile = {
-        count: 4,
-        spread: 0.4,
-        damage: 7,
-        range:20,
-        speed:10
-    },
-    baseStats={
-        fireRate: 18,
-    }),
-    
+            count: 4,
+            spread: 0.4,
+            damage: 7,
+            range: 20,
+            speed: 10
+        },
+        baseStats = {
+            fireRate: 18,
+        }),
 
 };
 
@@ -206,20 +205,20 @@ class Player {
         this.y += (level.controls.down - level.controls.up) * this.speed;
         //point towards cursor
         this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width / 2), -(level.controls.mousePosition.y - (this.y + this.height / 2)))
-        if(level.controls.shoot && this.attackCooldown <= 0) {
+        if (level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this, level);
             this.attackCooldown = this.weapon.stats.fireRate;
         }
     }
     draw(level = lvl) {
         //draw player
-        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
     }
     takeDamage(damage) {
         //This function is called from the enemies (and enemy bullets), since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
         this.health -= damage;
-        if(this.health <= 0) {
+        if (this.health <= 0) {
             //get all declarations of this.active before drawing
             this.active = false;
             this.gameOver();
@@ -264,28 +263,28 @@ class Enemy {
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
     }
 
-    takeDamage(damage,level = lvl) {
+    takeDamage(damage, level = lvl) {
         //This function is called from the projectiles, since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
         this.health -= damage;
-        if(this.health <= 0) {
+        if (this.health <= 0) {
             //get all declarations of this.active before drawing
             this.onDeath(level)
         }
 
     }
 
-    onDeath(level=lvl){
+    onDeath(level = lvl) {
         this.active = false;
-        level.collectibles.push(new Collectible(this.x,this.y,16,16,TEXTURES.collectible.coin))
+        level.collectibles.push(new Collectible(this.x, this.y, 16, 16, TEXTURES.collectible.coin))
     }
 }
 
 class Projectile {
-    constructor(owner, x, y, type, direction, damage = 10, range=50, width = 8, height = 8, speed = 10, texture = TEXTURES.projectile.playerbullet, ) {
+    constructor(owner, x, y, type, direction, damage = 10, range = 50, width = 8, height = 8, speed = 10, texture = TEXTURES.projectile.playerbullet, ) {
         this.owner = owner;
         this.x = x;
         this.y = y;
@@ -308,10 +307,10 @@ class Projectile {
         this.x += Math.sin(this.direction) * 20;
         this.y -= Math.cos(this.direction) * 20;
 
-        for(let e = 0; e < level.enemies.length; e++) {
+        for (let e = 0; e < level.enemies.length; e++) {
             const enemy = level.enemies[e];
 
-            if(this.x > enemy.x && this.x < enemy.x + enemy.width && this.y > enemy.y && this.y < enemy.y + enemy.height) {
+            if (this.x > enemy.x && this.x < enemy.x + enemy.width && this.y > enemy.y && this.y < enemy.y + enemy.height) {
                 //deletes both sprites
                 enemy.takeDamage(this.damage);
                 this.active = false;
@@ -319,13 +318,13 @@ class Projectile {
 
         }
 
-        if(this.frame > this.range) {
+        if (this.frame > this.range) {
             this.active = false;
         }
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
     }
 }
 
@@ -340,13 +339,13 @@ class Collectible {
 
         this.active = true;
     }
-    
-    tick(){
+
+    tick() {
 
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture,this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
     }
 }
 
@@ -357,11 +356,11 @@ class Level {
         this.ctx = canvas.getContext('2d');
         //fix this only if needed
         this.ctx.contextSmoothingEnabled = false;
-        this.ctx.mozImageSmoothingEnabled = false; 
+        this.ctx.mozImageSmoothingEnabled = false;
 
         this.players = [];
 
-        this.players.push(new Player(width/2, height/2, 32, 32));
+        this.players.push(new Player(width / 2, height / 2, 32, 32));
 
         this.enemies = [];
 
@@ -397,16 +396,19 @@ class Level {
 
         this.controls.mousePosition = mouse.position;
     }
-    
+
     spawnEnemy() {
-        let dist = (width>height?width:height)/2;
+        let dist = (width > height ? width : height) / 2;
         console.log(dist);
         //generate random angle
-        let deg = Math.random()*Math.PI*2
+        let deg = Math.random() * Math.PI * 2
         //use math: x = r × cos( θ ) y = r × sin( θ )
         //focus on P1 for now, although in future might use the middle of screen
-        let basePos = {x:this.players[0].x,y:this.players[0].y};
-        this.enemies.push(new Enemy(basePos.x + dist*Math.cos(deg),basePos.y + dist*Math.sin(deg),32,32))
+        let basePos = {
+            x: this.players[0].x,
+            y: this.players[0].y
+        };
+        this.enemies.push(new Enemy(basePos.x + dist * Math.cos(deg), basePos.y + dist * Math.sin(deg), 32, 32))
 
     }
 
@@ -421,46 +423,45 @@ class Level {
             this.spawnEnemy()
         }
 
-
         // tick players
         this.players = this.players.filter(player => player.active);
-        for(let player = 0; player < this.players.length; player++) {
+        for (let player = 0; player < this.players.length; player++) {
             this.players[player].tick(this);
         }
         // tick enemies
         this.enemies = this.enemies.filter(enemy => enemy.active);
-        for(let enemy = 0; enemy < this.enemies.length; enemy++) {
+        for (let enemy = 0; enemy < this.enemies.length; enemy++) {
             this.enemies[enemy].tick(this);
         }
 
         // tick projectiles
         this.projectiles = this.projectiles.filter(projectile => projectile.active);
-        for(let projectiles = 0; projectiles < this.projectiles.length; projectiles++) {
+        for (let projectiles = 0; projectiles < this.projectiles.length; projectiles++) {
             this.projectiles[projectiles].tick(this)
         }
 
         // tick collectibles
         this.collectibles = this.collectibles.filter(collectible => collectible.active);
-        for(let collectibles = 0; collectibles < this.collectibles.length; collectibles++) {
+        for (let collectibles = 0; collectibles < this.collectibles.length; collectibles++) {
             this.collectibles[collectibles].tick(this)
         }
-        
+
     }
     draw() {
         //draw bg
         this.ctx.drawImage(TEXTURES.bg, 0, 0)
 
-        for(let enemy = 0; enemy < this.enemies.length; enemy++) {
+        for (let enemy = 0; enemy < this.enemies.length; enemy++) {
             this.enemies[enemy].draw()
         }
-        for(let player = 0; player < this.players.length; player++) {
+        for (let player = 0; player < this.players.length; player++) {
             this.players[player].draw()
         }
-        
-        for(let projectile = 0; projectile < this.projectiles.length; projectile++) {
+
+        for (let projectile = 0; projectile < this.projectiles.length; projectile++) {
             this.projectiles[projectile].draw()
         }
-        for(let collectible = 0; collectible < this.collectibles.length; collectible++) {
+        for (let collectible = 0; collectible < this.collectibles.length; collectible++) {
             this.collectibles[collectible].draw()
         }
     }
@@ -503,7 +504,7 @@ function addEventListeners() {
 }
 
 window.onload = () => {
-    addEventListeners()
+    addEventListeners();
     document.body.appendChild(canvas);
     setInterval(loop, 30);
 

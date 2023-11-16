@@ -1,0 +1,135 @@
+@font-face {
+    font-family: 'Pixel Operator 8';
+    src: url('PixelOperator8.woff2') format('woff2'),
+        url('PixelOperator8.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator';
+    src: url('PixelOperator-Bold.woff2') format('woff2'),
+        url('PixelOperator-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator 8';
+    src: url('PixelOperator8-Bold.woff2') format('woff2'),
+        url('PixelOperator8-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator Mono';
+    src: url('PixelOperatorMono-Bold.woff2') format('woff2'),
+        url('PixelOperatorMono-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator Mono';
+    src: url('PixelOperatorMono.woff2') format('woff2'),
+        url('PixelOperatorMono.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator HB SC';
+    src: url('PixelOperatorHBSC.woff2') format('woff2'),
+        url('PixelOperatorHBSC.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator Mono HB 8';
+    src: url('PixelOperatorMonoHB8.woff2') format('woff2'),
+        url('PixelOperatorMonoHB8.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator HB 8';
+    src: url('PixelOperatorHB8.woff2') format('woff2'),
+        url('PixelOperatorHB8.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator Mono HB';
+    src: url('PixelOperatorMonoHB.woff2') format('woff2'),
+        url('PixelOperatorMonoHB.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator Mono 8';
+    src: url('PixelOperatorMono8.woff2') format('woff2'),
+        url('PixelOperatorMono8.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator HB';
+    src: url('PixelOperatorHB.woff2') format('woff2'),
+        url('PixelOperatorHB.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator Mono 8';
+    src: url('PixelOperatorMono8-Bold.woff2') format('woff2'),
+        url('PixelOperatorMono8-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator SC';
+    src: url('PixelOperatorSC-Bold.woff2') format('woff2'),
+        url('PixelOperatorSC-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator';
+    src: url('PixelOperator.woff2') format('woff2'),
+        url('PixelOperator.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pixel Operator SC';
+    src: url('PixelOperatorSC.woff2') format('woff2'),
+        url('PixelOperatorSC.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+

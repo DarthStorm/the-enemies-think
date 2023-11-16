@@ -182,7 +182,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
+    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.OPTest, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -195,6 +195,8 @@ class Player {
         this.attackCooldown = 0;
         this.direction = 0;
         this.health = this.maxhealth;
+
+        this.money = 0;
 
         this.active = true;
     }
@@ -329,23 +331,92 @@ class Projectile {
 }
 
 class Collectible {
-    constructor(x, y, width = 16, height = 16, texture = TEXTURES.collectible.coin) {
+    constructor(x, y, width = 16, height = 16, value=1, texture = TEXTURES.collectible.coin) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.texture = texture;
         this.speed = 5;
+        this.value = value
+        this.direction = 0;
 
         this.active = true;
     }
 
-    tick() {
+    tick(level=lvl) {
+        //when colliding with a player, give them money
+        var playersSorted = level.players.concat() // makes a new array. but HOW
+        playersSorted.sort(function (a, b) {
+            // dist between 2 points
+            return Math.sqrt((b.x - this.x) ** 2 + (b.y - this.y) ** 2) - Math.sqrt((a.x - this.x) ** 2 + (a.y - this.y) ** 2)
+        });
 
+        if (this.active) {
+            let target = playersSorted[0];
+            let dist = Math.sqrt((target.x - this.x) ** 2 + (target.y - this.y) ** 2)
+            if (dist < target.width) {
+                target.money += this.value;
+                this.active = false;
+            } else if (dist < 300){
+                this.direction = Math.atan2(target.x - (this.x), -(target.y - (this.y)))
+                this.x += Math.sin(this.direction) * (299-dist)/20;
+                this.y -= Math.cos(this.direction) * (299-dist)/20;
+            }
+        }
+        
     }
 
     draw(level = lvl) {
         level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+    }
+}
+
+class UIElement {
+    constructor(name,value,x,y){
+        this.name = name;
+        this.value = value;
+        this.x = x;
+        this.y = y;
+    }
+
+    tick(level=lvl){}
+    draw(level=lvl){}
+}
+
+class Text extends UIElement {
+    constructor(name,value,color="#FFFFFF",font="10px PixelOperator"){
+        super(name,value)
+        this.color = color;
+        this.font = font;
+   }
+    tick(level=lvl,value=null){
+        this.value = value??this.value;
+    }
+    draw(level=lvl){
+        lvl.ctx.font = this.font;
+        lvl.ctx.fillStyle = this.color;
+        lvl.ctx.fillText(this.value,this.x,this.y)
+    }
+}
+t
+class UIContainer {
+    constructor(uiElements = {}){
+        this.uiElements = uiElements;
+    }
+
+    tick(){
+        this.uiElements = this.uiElements.filter(uiElement => uiElement.active);
+        for (let uiElement = 0; uiElement < this.uiElements.length; uiElement++) {
+            this.uiElements[uiElement].tick(this);
+        }
+    }
+
+    draw(){
+        this.uiElements = this.uiElements.filter(uiElement => uiElement.active);
+        for (let uiElement = 0; uiElement < this.uiElements.length; uiElement++) {
+            this.uiElements[uiElement].draw(this);
+        }
     }
 }
 
@@ -372,6 +443,10 @@ class Level {
         this.projectiles = [];
 
         this.collectibles = [];
+
+        this.uiContainer = new UIContainer({
+
+        })
 
         this.controls = {
             up: false,

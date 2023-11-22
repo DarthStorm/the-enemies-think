@@ -80,6 +80,17 @@ canvas.width = width;
 canvas.height = height;
 canvas.id = 'canvas';
 
+// font stuff
+const PixelOperator = new FontFace('PixelOperator', 'url(assets/fonts/PixelOperator/PixelOperator.woff)');
+document.fonts.add(PixelOperator)
+PixelOperator.load()
+
+document.fonts.ready.then((font) => {
+  console.log('Fonts loaded');
+});
+
+
+
 const allControls = {
 
 };
@@ -281,7 +292,7 @@ class Enemy {
 
     onDeath(level = lvl) {
         this.active = false;
-        level.collectibles.push(new Collectible(this.x, this.y, 16, 16, TEXTURES.collectible.coin))
+        level.collectibles.push(new Collectible(this.x, this.y, 16, 16, 1,TEXTURES.collectible.coin))
     }
 }
 
@@ -338,7 +349,7 @@ class Collectible {
         this.height = height;
         this.texture = texture;
         this.speed = 5;
-        this.value = value
+        this.value = value,
         this.direction = 0;
 
         this.active = true;
@@ -360,8 +371,8 @@ class Collectible {
                 this.active = false;
             } else if (dist < 300){
                 this.direction = Math.atan2(target.x - (this.x), -(target.y - (this.y)))
-                this.x += Math.sin(this.direction) * (299-dist)/20;
-                this.y -= Math.cos(this.direction) * (299-dist)/20;
+                this.x += Math.sin(this.direction) * ((299-dist)/20 + 20);
+                this.y -= Math.cos(this.direction) * ((299-dist)/20 + 20);
             }
         }
         
@@ -384,38 +395,37 @@ class UIElement {
     draw(level=lvl){}
 }
 
-class Text extends UIElement {
-    constructor(name,value,color="#FFFFFF",font="10px PixelOperator"){
-        super(name,value)
+class TextUIElement extends UIElement {
+    constructor(name,value,x,y,color="#FFFFFF",font="10px PixelOperator,monospace,sans-serif"){
+        super(name,value,x,y)
         this.color = color;
         this.font = font;
+        
    }
     tick(level=lvl,value=null){
         this.value = value??this.value;
     }
     draw(level=lvl){
-        lvl.ctx.font = this.font;
-        lvl.ctx.fillStyle = this.color;
-        lvl.ctx.fillText(this.value,this.x,this.y)
+        level.ctx.font = this.font;
+        level.ctx.fillStyle = this.color;
+        level.ctx.fillText(this.value,this.x,this.y)
     }
 }
-t
+
 class UIContainer {
     constructor(uiElements = {}){
         this.uiElements = uiElements;
     }
 
-    tick(){
-        this.uiElements = this.uiElements.filter(uiElement => uiElement.active);
-        for (let uiElement = 0; uiElement < this.uiElements.length; uiElement++) {
-            this.uiElements[uiElement].tick(this);
+    tick(level=lvl){
+        for (let uiElement in this.uiElements) {
+            this.uiElements[uiElement].tick(level);
         }
     }
 
-    draw(){
-        this.uiElements = this.uiElements.filter(uiElement => uiElement.active);
-        for (let uiElement = 0; uiElement < this.uiElements.length; uiElement++) {
-            this.uiElements[uiElement].draw(this);
+    draw(level=lvl){
+        for (let uiElement in this.uiElements) {
+            this.uiElements[uiElement].draw(level);
         }
     }
 }
@@ -445,7 +455,7 @@ class Level {
         this.collectibles = [];
 
         this.uiContainer = new UIContainer({
-
+            coinCounter: new TextUIElement("coinCounter",123,100,100,"#FFFFFF","69px PixelOperator,sans-serif")
         })
 
         this.controls = {
@@ -474,7 +484,6 @@ class Level {
 
     spawnEnemy() {
         let dist = (width > height ? width : height) / 2;
-        console.log(dist);
         //generate random angle
         let deg = Math.random() * Math.PI * 2
         //use math: x = r × cos( θ ) y = r × sin( θ )
@@ -521,6 +530,8 @@ class Level {
             this.collectibles[collectibles].tick(this)
         }
 
+        this.uiContainer.tick(this);
+
     }
     draw() {
         //draw bg
@@ -539,6 +550,9 @@ class Level {
         for (let collectible = 0; collectible < this.collectibles.length; collectible++) {
             this.collectibles[collectible].draw()
         }
+
+        this.uiContainer.draw(this);
+        this.ctx.fillStyle = "#ACACAC"
     }
 }
 
@@ -577,10 +591,10 @@ function addEventListeners() {
     });
 
 }
-
+let loopnumber = 0;
 window.onload = () => {
     addEventListeners();
     document.body.appendChild(canvas);
-    setInterval(loop, 30);
+    loopnumber = setInterval(loop, 30);
 
 }

@@ -80,6 +80,11 @@ canvas.width = width;
 canvas.height = height;
 canvas.id = 'canvas';
 
+//deltatime
+let lastUpdate = Date.now();
+let now = 0;
+let dt = 0;
+
 // font stuff
 const PixelOperator = new FontFace('PixelOperator', 'url(assets/fonts/PixelOperator/PixelOperator.woff)');
 document.fonts.add(PixelOperator)
@@ -129,7 +134,8 @@ function newWeapon(type_ = "", baseProjectile = {
     count: 1,
     spread: 0,
     damage: 10,
-    range: 50
+    range: 50,
+    speed:0.7,
 
 }, baseStats = {
     fireRate: 12,
@@ -139,16 +145,16 @@ function newWeapon(type_ = "", baseProjectile = {
         type: type_,
         projectile: baseProjectile,
         stats: baseStats,
-        positionProjectiles: function (player, count = this.projectile.count, spread = this.projectile.spread, damage = this.projectile.damage, range = this.projectile.range) {
+        positionProjectiles: function (player, count = this.projectile.count, spread = this.projectile.spread, damage = this.projectile.damage, range = this.projectile.range, speed = this.projectile.speed) {
             if (count == 1) {
                 //hardcoded, as everything else seems to have issues
-                return [new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction, damage, range)];
+                return [new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction, damage, range, speed)];
             }
             let res = [];
             let spreadPerBullet = spread / (count - 1);
             let baseDirection = player.direction - spread / 2;
             for (let i = 0; i < count; i++) {
-                res.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, baseDirection + spreadPerBullet * i, damage, range));
+                res.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, baseDirection + spreadPerBullet * i, damage, range, speed));
             }
             return res;
         },
@@ -166,15 +172,28 @@ function newWeapon(type_ = "", baseProjectile = {
 
 const WEAPONS = {
     //weapons
+    // ridiculously op:
+    op:{
+        SonicBoom: newWeapon("SonicBoom", baseProjectile = {
+            count: 100,
+            spread: 1,
+            damage: 100,
+            range: 100,
+            speed:1
+        }, baseStats = {
+            fireRate: 5,
+        }),
+        SingleShot: newWeapon("SingleShot", baseProjectile = {
+            count: 1,
+            spread: 0,
+            damage: 1000,
+            range: 100,
+            speed: 1
+        }, baseStats = {
+            fireRate: 10,
+        }),
+    },
 
-    OPTest: newWeapon("OPTest", baseProjectile = {
-        count: 100,
-        spread: 1,
-        damage: 100,
-        range: 100
-    }, baseStats = {
-        fireRate: 5,
-    }),
 
     //normal weapons
     Pistol: newWeapon("Pistol"),
@@ -193,13 +212,13 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.OPTest, maxhealth = 100) {
+    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SonicBoom, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.texture = texture;
-        this.speed = 10;
+        this.speed = 0.3;
         this.weapon = weapon;
         this.maxhealth = maxhealth;
 
@@ -214,8 +233,8 @@ class Player {
 
     tick(level = lvl) {
         this.attackCooldown -= 1;
-        this.x += (level.controls.right - level.controls.left) * this.speed;
-        this.y += (level.controls.down - level.controls.up) * this.speed;
+        this.x += (level.controls.right - level.controls.left) * this.speed * dt;
+        this.y += (level.controls.down - level.controls.up) * this.speed * dt;
         //point towards cursor
         this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width / 2), -(level.controls.mousePosition.y - (this.y + this.height / 2)))
         if (level.controls.shoot && this.attackCooldown <= 0) {
@@ -253,7 +272,7 @@ class Enemy {
         this.direction = direction
         this.texture = texture;
         this.maxhealth = maxhealth;
-        this.speed = 5;
+        this.speed = 0.1;
         this.health = this.maxhealth;
 
         this.active = true;
@@ -268,8 +287,8 @@ class Enemy {
 
         this.direction = Math.atan2(playersSorted[0].x - (this.x), -(playersSorted[0].y - (this.y)))
 
-        this.x += Math.sin(this.direction) * 3;
-        this.y -= Math.cos(this.direction) * 3;
+        this.x += Math.sin(this.direction) * this.speed * dt;
+        this.y -= Math.cos(this.direction) * this.speed * dt;
 
         //take damage
 
@@ -282,6 +301,13 @@ class Enemy {
     takeDamage(damage, level = lvl) {
         //This function is called from the projectiles, since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
+        
+        //for some reason, the enemy dies multiple times in a single tick
+        //thank goodness I had the most op weapon ever
+        if (!this.active) {
+            return;
+        }
+        
         this.health -= damage;
         if (this.health <= 0) {
             //get all declarations of this.active before drawing
@@ -297,7 +323,7 @@ class Enemy {
 }
 
 class Projectile {
-    constructor(owner, x, y, type, direction, damage = 10, range = 50, width = 8, height = 8, speed = 10, texture = TEXTURES.projectile.playerbullet, ) {
+    constructor(owner, x, y, type, direction, damage = 10, range = 50, speed = 0.7, width = 8, height = 8, texture = TEXTURES.projectile.playerbullet, ) {
         this.owner = owner;
         this.x = x;
         this.y = y;
@@ -317,8 +343,8 @@ class Projectile {
 
     tick(level = lvl) {
         this.frame += 1;
-        this.x += Math.sin(this.direction) * 20;
-        this.y -= Math.cos(this.direction) * 20;
+        this.x += Math.sin(this.direction) * this.speed * dt;
+        this.y -= Math.cos(this.direction) * this.speed * dt;
 
         for (let e = 0; e < level.enemies.length; e++) {
             const enemy = level.enemies[e];
@@ -357,9 +383,8 @@ class Collectible {
 
     tick(level=lvl) {
         //when colliding with a player, give them money
-        var playersSorted = level.players.concat() // makes a new array. but HOW
+        var playersSorted = level.players.concat()
         playersSorted.sort(function (a, b) {
-            // dist between 2 points
             return Math.sqrt((b.x - this.x) ** 2 + (b.y - this.y) ** 2) - Math.sqrt((a.x - this.x) ** 2 + (a.y - this.y) ** 2)
         });
 
@@ -455,8 +480,15 @@ class Level {
         this.collectibles = [];
 
         this.uiContainer = new UIContainer({
-            coinCounter: new TextUIElement("coinCounter",123,100,100,"#FFFFFF","69px PixelOperator,sans-serif")
+            coinCounter: new TextUIElement("coinCounter",0,100,100,"#FFFFFF","69px PixelOperator,sans-serif")
         })
+
+        // temp for now, probably will become THE solution
+
+        this.uiContainer.uiElements.coinCounter.tick = function (level,value) {
+            this.value = level.players[0].money;
+        }
+
 
         this.controls = {
             up: false,
@@ -567,6 +599,10 @@ function draw() {
 }
 
 function loop() {
+    //get deltatime
+    now = Date.now();
+    dt = now - lastUpdate;
+    lastUpdate = now;
     tick();
     draw();
 }
@@ -595,6 +631,6 @@ let loopnumber = 0;
 window.onload = () => {
     addEventListeners();
     document.body.appendChild(canvas);
-    loopnumber = setInterval(loop, 30);
+    loopnumber = setInterval(loop, 1);
 
 }

@@ -83,7 +83,7 @@ canvas.id = 'canvas';
 //deltatime
 let lastUpdate = Date.now();
 let now = 0;
-let dt = 0;
+let deltaTime = 0;
 
 // font stuff
 const PixelOperator = new FontFace('PixelOperator', 'url(assets/fonts/PixelOperator/PixelOperator.woff)');
@@ -134,11 +134,11 @@ function newWeapon(type_ = "", baseProjectile = {
     count: 1,
     spread: 0,
     damage: 10,
-    range: 50,
+    range: 600,
     speed:0.7,
 
 }, baseStats = {
-    fireRate: 12,
+    fireRate: 36,
 }, onAttack_ = undefined) {
 
     const Weapon = {
@@ -178,8 +178,8 @@ const WEAPONS = {
             count: 100,
             spread: 1,
             damage: 100,
-            range: 100,
-            speed:1
+            range: 1200,
+            speed: 1
         }, baseStats = {
             fireRate: 5,
         }),
@@ -187,10 +187,10 @@ const WEAPONS = {
             count: 1,
             spread: 0,
             damage: 1000,
-            range: 100,
+            range: 2400,
             speed: 1
         }, baseStats = {
-            fireRate: 10,
+            fireRate: 0,
         }),
     },
 
@@ -201,18 +201,18 @@ const WEAPONS = {
             count: 4,
             spread: 0.4,
             damage: 7,
-            range: 20,
-            speed: 10
+            range: 1200,
+            speed: 1,
         },
         baseStats = {
-            fireRate: 18,
+            fireRate: 60,
         }),
 
 };
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SonicBoom, maxhealth = 100) {
+    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SingleShot, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -233,8 +233,8 @@ class Player {
 
     tick(level = lvl) {
         this.attackCooldown -= 1;
-        this.x += (level.controls.right - level.controls.left) * this.speed * dt;
-        this.y += (level.controls.down - level.controls.up) * this.speed * dt;
+        this.x += (level.controls.right - level.controls.left) * this.speed * deltaTime;
+        this.y += (level.controls.down - level.controls.up) * this.speed * deltaTime;
         //point towards cursor
         this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width / 2), -(level.controls.mousePosition.y - (this.y + this.height / 2)))
         if (level.controls.shoot && this.attackCooldown <= 0) {
@@ -274,6 +274,7 @@ class Enemy {
         this.maxhealth = maxhealth;
         this.speed = 0.1;
         this.health = this.maxhealth;
+        this.damage = 5
 
         this.active = true;
     }
@@ -287,10 +288,15 @@ class Enemy {
 
         this.direction = Math.atan2(playersSorted[0].x - (this.x), -(playersSorted[0].y - (this.y)))
 
-        this.x += Math.sin(this.direction) * this.speed * dt;
-        this.y -= Math.cos(this.direction) * this.speed * dt;
+        this.x += Math.sin(this.direction) * this.speed * deltaTime;
+        this.y -= Math.cos(this.direction) * this.speed * deltaTime;
 
-        //take damage
+        for (var i = 0; i < playersSorted.length; i++){
+            const player = playersSorted[i];
+            if (this.x > player.x && this.x < player.x + player.width && this.y > player.y && this.y < player.y + player.height) {
+                player.takeDamage(this.damage);
+            } 
+        }
 
     }
 
@@ -303,14 +309,14 @@ class Enemy {
         //Deducts HP and kills if hp <= 0
         
         //for some reason, the enemy dies multiple times in a single tick
-        //thank goodness I had the most op weapon ever
+        //thank goodness I had the most op weapon ever, otherwise I wouldn't have found this
         if (!this.active) {
             return;
         }
         
         this.health -= damage;
         if (this.health <= 0) {
-            //get all declarations of this.active before drawing
+            //get all changes of this.active before drawing
             this.onDeath(level)
         }
 
@@ -323,7 +329,7 @@ class Enemy {
 }
 
 class Projectile {
-    constructor(owner, x, y, type, direction, damage = 10, range = 50, speed = 0.7, width = 8, height = 8, texture = TEXTURES.projectile.playerbullet, ) {
+    constructor(owner, x, y, type, direction, damage = 10, range = 300, speed = 0.7, width = 8, height = 8, texture = TEXTURES.projectile.playerbullet, ) {
         this.owner = owner;
         this.x = x;
         this.y = y;
@@ -342,9 +348,9 @@ class Projectile {
     }
 
     tick(level = lvl) {
-        this.frame += 1;
-        this.x += Math.sin(this.direction) * this.speed * dt;
-        this.y -= Math.cos(this.direction) * this.speed * dt;
+        this.frame += deltaTime;
+        this.x += Math.sin(this.direction) * this.speed * deltaTime;
+        this.y -= Math.cos(this.direction) * this.speed * deltaTime;
 
         for (let e = 0; e < level.enemies.length; e++) {
             const enemy = level.enemies[e];
@@ -396,8 +402,8 @@ class Collectible {
                 this.active = false;
             } else if (dist < 300){
                 this.direction = Math.atan2(target.x - (this.x), -(target.y - (this.y)))
-                this.x += Math.sin(this.direction) * ((299-dist)/20 + 20);
-                this.y -= Math.cos(this.direction) * ((299-dist)/20 + 20);
+                this.x += Math.sin(this.direction) * ((299-dist)/200 + 0.1) * deltaTime;
+                this.y -= Math.cos(this.direction) * ((299-dist)/200 + 0.1) * deltaTime;
             }
         }
         
@@ -480,13 +486,17 @@ class Level {
         this.collectibles = [];
 
         this.uiContainer = new UIContainer({
-            coinCounter: new TextUIElement("coinCounter",0,100,100,"#FFFFFF","69px PixelOperator,sans-serif")
+            coinCounter: new TextUIElement("coinCounter",0,50,50,"#FFFFFF","20px PixelOperator,sans-serif"),
+            healthBar: new TextUIElement("healthBar",0,50,100,"#FFDDDD","20px PixelOperator,sans-serif"),
         })
 
         // temp for now, probably will become THE solution
 
         this.uiContainer.uiElements.coinCounter.tick = function (level,value) {
-            this.value = level.players[0].money;
+            this.value = "MONEY: " + level.players[0].money;
+        }
+        this.uiContainer.uiElements.healthBar.tick = function (level,value) {
+            this.value = "HP: " + level.players[0].health;
         }
 
 
@@ -601,8 +611,9 @@ function draw() {
 function loop() {
     //get deltatime
     now = Date.now();
-    dt = now - lastUpdate;
+    deltaTime = now - lastUpdate;
     lastUpdate = now;
+    console.log(1000/deltaTime)
     tick();
     draw();
 }

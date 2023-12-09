@@ -81,6 +81,7 @@ canvas.height = height;
 canvas.id = 'canvas';
 
 //deltatime
+//16-17 at 60fps
 let lastUpdate = Date.now();
 let now = 0;
 let deltaTime = 0;
@@ -134,27 +135,28 @@ function newWeapon(type_ = "", baseProjectile = {
     count: 1,
     spread: 0,
     damage: 10,
-    range: 600,
+    range: 2000,
     speed:0.7,
+    size: 8,
 
 }, baseStats = {
-    fireRate: 36,
+    fireRate: 700,
 }, onAttack_ = undefined) {
 
     const Weapon = {
         type: type_,
         projectile: baseProjectile,
         stats: baseStats,
-        positionProjectiles: function (player, count = this.projectile.count, spread = this.projectile.spread, damage = this.projectile.damage, range = this.projectile.range, speed = this.projectile.speed) {
+        positionProjectiles: function (player, count = this.projectile.count, spread = this.projectile.spread, damage = this.projectile.damage, range = this.projectile.range, speed = this.projectile.speed, size = this.projectile.size) {
             if (count == 1) {
                 //hardcoded, as everything else seems to have issues
-                return [new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction, damage, range, speed)];
+                return [new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, player.direction, damage, range, speed, size, size)];
             }
             let res = [];
             let spreadPerBullet = spread / (count - 1);
             let baseDirection = player.direction - spread / 2;
             for (let i = 0; i < count; i++) {
-                res.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, baseDirection + spreadPerBullet * i, damage, range, speed));
+                res.push(new Projectile(player, player.x + player.width / 2, player.y + player.height / 2, type_, baseDirection + spreadPerBullet * i, damage, range, speed, size, size));
             }
             return res;
         },
@@ -179,18 +181,20 @@ const WEAPONS = {
             spread: 1,
             damage: 100,
             range: 1200,
-            speed: 1
+            speed: 1,
+            size: 100,
         }, baseStats = {
-            fireRate: 5,
+            fireRate: 50,
         }),
         SingleShot: newWeapon("SingleShot", baseProjectile = {
-            count: 1,
+            count: 100,
             spread: 0,
             damage: 1000,
             range: 2400,
-            speed: 1
+            speed: 1,
+            size:30,
         }, baseStats = {
-            fireRate: 0,
+            fireRate: 700,
         }),
     },
 
@@ -199,13 +203,14 @@ const WEAPONS = {
     Pistol: newWeapon("Pistol"),
     Shotgun: newWeapon("Shotgun", baseProjectile = {
             count: 4,
-            spread: 0.4,
-            damage: 7,
-            range: 1200,
+            spread: 0.6,
+            damage: 9,
+            range: 400,
             speed: 1,
+            size: 16,
         },
         baseStats = {
-            fireRate: 60,
+            fireRate: 800,
         }),
 
 };
@@ -215,6 +220,8 @@ class Player {
     constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SingleShot, maxhealth = 100) {
         this.x = x;
         this.y = y;
+        this.xv = 0;
+        this.yv = 0;
         this.width = width;
         this.height = height;
         this.texture = texture;
@@ -225,6 +232,8 @@ class Player {
         this.attackCooldown = 0;
         this.direction = 0;
         this.health = this.maxhealth;
+        this.invul = 0;
+        this.stunned = 0;
 
         this.money = 0;
 
@@ -232,9 +241,24 @@ class Player {
     }
 
     tick(level = lvl) {
-        this.attackCooldown -= 1;
-        this.x += (level.controls.right - level.controls.left) * this.speed * deltaTime;
-        this.y += (level.controls.down - level.controls.up) * this.speed * deltaTime;
+        if (this.invul > 0) {
+            this.invul -= deltaTime;
+        }
+        this.attackCooldown -= deltaTime;
+        if (this.stunned > 0) {
+            this.stunned -= deltaTime;
+            this.xv *= deltaTime/(deltaTime+10);
+            this.yv *= deltaTime/(deltaTime+10);
+            console.log(this.xv,this.yv,this.x,this.y);
+            if (this.xv < 1 && this.yv < 1) {
+                this.stunned = 0;
+            }
+        } else {
+            this.xv = (level.controls.right - level.controls.left) * this.speed * deltaTime;
+            this.yv = (level.controls.down - level.controls.up) * this.speed * deltaTime;
+        }
+        this.x += this.xv;
+        this.y += this.yv;
         //point towards cursor
         this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width / 2), -(level.controls.mousePosition.y - (this.y + this.height / 2)))
         if (level.controls.shoot && this.attackCooldown <= 0) {
@@ -244,17 +268,36 @@ class Player {
     }
     draw(level = lvl) {
         //draw player
+        if (this.invul > 0 && this.invul/10 % 2 == 0) {
+            let prevAlpha = level.ctx.globalAlpha;
+            ctx.globalAlpha = 0.4;
+            level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+            ctx.globalAlpha = prevAlpha;
+        }
         level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
     }
-    takeDamage(damage) {
+    takeDamage(damage,knockback = {direction:0,strength:0}, ignoreInvulnerability = false) {
         //This function is called from the enemies (and enemy bullets), since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
+        //ignoreInvulnerability just forcefully deals damage
+        if (this.invul > 0 && !ignoreInvulnerability) {
+            // don't do anything when player is invincible
+            return;
+        }
+        //player got hit oh no
         this.health -= damage;
+        //deal kb dmg
+        this.xv = Math.sin(knockback.direction) * knockback.strength * deltaTime;
+        this.yv = -(Math.cos(knockback.direction) * knockback.strength * deltaTime);
+        console.log(this.xv,this.yv,knockback);
+        this.stunned = 1000;
+
         if (this.health <= 0) {
             //get all declarations of this.active before drawing
             this.active = false;
             this.gameOver();
         }
+        this.invul = 1200;
 
     }
 
@@ -267,6 +310,8 @@ class Enemy {
     constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40, texture = TEXTURES.enemy.basic) {
         this.x = x;
         this.y = y;
+        this.xv = 0;
+        this.yv = 0;
         this.width = width;
         this.height = height;
         this.direction = direction
@@ -276,6 +321,7 @@ class Enemy {
         this.health = this.maxhealth;
         this.damage = 5
 
+        this.stunned = 0;
         this.active = true;
     }
 
@@ -287,14 +333,15 @@ class Enemy {
         });
 
         this.direction = Math.atan2(playersSorted[0].x - (this.x), -(playersSorted[0].y - (this.y)))
-
-        this.x += Math.sin(this.direction) * this.speed * deltaTime;
-        this.y -= Math.cos(this.direction) * this.speed * deltaTime;
+        this.xv = Math.sin(this.direction) * this.speed * deltaTime;
+        this.yv = -(Math.cos(this.direction) * this.speed * deltaTime);
+        this.x += this.xv;
+        this.y += this.yv; 
 
         for (var i = 0; i < playersSorted.length; i++){
             const player = playersSorted[i];
             if (this.x > player.x && this.x < player.x + player.width && this.y > player.y && this.y < player.y + player.height) {
-                player.takeDamage(this.damage);
+                player.takeDamage(this.damage,{direction:this.direction,strength:20});
             } 
         }
 
@@ -488,6 +535,8 @@ class Level {
         this.uiContainer = new UIContainer({
             coinCounter: new TextUIElement("coinCounter",0,50,50,"#FFFFFF","20px PixelOperator,sans-serif"),
             healthBar: new TextUIElement("healthBar",0,50,100,"#FFDDDD","20px PixelOperator,sans-serif"),
+            
+            generalDisplay: new TextUIElement("generalDisplay",0,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
         })
 
         // temp for now, probably will become THE solution
@@ -497,6 +546,9 @@ class Level {
         }
         this.uiContainer.uiElements.healthBar.tick = function (level,value) {
             this.value = "HP: " + level.players[0].health;
+        }
+        this.uiContainer.uiElements.generalDisplay.tick = function (level,value) {
+            this.value = "FPS: " + String(Math.round(1000/deltaTime)).padStart(3, '0') + ", DT: " + deltaTime;
         }
 
 
@@ -543,9 +595,9 @@ class Level {
 
         // level tick:
         // enemy spawning
-        this.enemyspawntimer -= 1
+        this.enemyspawntimer -= deltaTime
         if (this.enemyspawntimer <= 0) {
-            this.enemyspawntimer = 100
+            this.enemyspawntimer = 2000
             this.spawnEnemy()
         }
 
@@ -613,7 +665,7 @@ function loop() {
     now = Date.now();
     deltaTime = now - lastUpdate;
     lastUpdate = now;
-    console.log(1000/deltaTime)
+    // console.log(1000/deltaTime)
     tick();
     draw();
 }

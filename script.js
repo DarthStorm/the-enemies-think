@@ -109,26 +109,32 @@ const mouse = {
     }
 }
 
-function loadImage(src = "") {
+function loadTexture(src = "") {
     let x = new Image();
     x.src = "assets/" + src;
     return x;
 }
 const TEXTURES = {
-    bg: loadImage("bg.png"),
+    empty: loadTexture('empty.png'),
+    bg: loadTexture("bg.png"),
     player: {
-        idle: loadImage("player.png"),
+        idle: loadTexture("player.png"),
     },
     enemy: {
         //change later
-        basic: loadImage("enemy.png"),
+        basic: loadTexture("enemy.png"),
     },
     projectile: {
-        playerbullet: loadImage("playerbullet.png"),
+        playerbullet: loadTexture("playerbullet.png"),
     },
     collectible: {
-        coin: loadImage("coin.png")
+        coin: loadTexture("coin.png"),
     },
+    ui: {
+        coin: loadTexture("ui/coin.png"),
+        health: loadTexture("ui/health.png"),
+        upgradeshop: loadTexture("ui/upgradeshop.png")
+    }
 };
 
 function newWeapon(type_ = "", baseProjectile = {
@@ -217,7 +223,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -465,9 +471,10 @@ class Collectible {
 }
 
 class UIElement {
-    constructor(name,value,x,y){
+    constructor(name,value,texture,x,y){
         this.name = name;
         this.value = value;
+        this.texture = texture
         this.x = x;
         this.y = y;
     }
@@ -476,9 +483,9 @@ class UIElement {
     draw(level=lvl){}
 }
 
-class TextUIElement extends UIElement {
-    constructor(name,value,x,y,color="#FFFFFF",font="10px PixelOperator,monospace,sans-serif"){
-        super(name,value,x,y)
+class Label extends UIElement {
+    constructor(name,value,texture=TEXTURES.empty,x,y,color="#FFFFFF",font="10px PixelOperator,monospace,sans-serif"){
+        super(name,value,texture,x,y)
         this.color = color;
         this.font = font;
         
@@ -487,9 +494,15 @@ class TextUIElement extends UIElement {
         this.value = value??this.value;
     }
     draw(level=lvl){
+        console.log();
+        level.ctx.drawImage(this.texture,this.x,this.y)
+
         level.ctx.font = this.font;
         level.ctx.fillStyle = this.color;
-        level.ctx.fillText(this.value,this.x,this.y)
+        let metrics = level.ctx.measureText(this.value)
+        let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        level.ctx.fillText(this.value,this.x + this.texture.width,this.y + actualHeight/2 + this.texture.width/2)
+
     }
 }
 
@@ -536,10 +549,10 @@ class Level {
         this.collectibles = [];
 
         this.uiContainer = new UIContainer({
-            coinCounter: new TextUIElement("coinCounter",0,50,50,"#FFFFFF","20px PixelOperator,sans-serif"),
-            healthBar: new TextUIElement("healthBar",0,50,100,"#FFDDDD","20px PixelOperator,sans-serif"),
+            coinCounter: new Label("coinCounter",0,TEXTURES.ui.coin,50,50,"#FFFFFF","20px PixelOperator,sans-serif"),
+            healthBar: new Label("healthBar",0,TEXTURES.ui.health,50,100,"#FFDDDD","20px PixelOperator,sans-serif"),
             
-            generalDisplay: new TextUIElement("generalDisplay",0,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
+            generalDisplay: new Label("generalDisplay",0,TEXTURES.empty,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
         })
 
         // temp for now, probably will become THE solution

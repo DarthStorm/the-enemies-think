@@ -133,7 +133,7 @@ const TEXTURES = {
     ui: {
         coin: loadTexture("ui/coin.png"),
         health: loadTexture("ui/health.png"),
-        upgradeshop: loadTexture("ui/upgradeshop.png")
+        upgradeShop: loadTexture("ui/upgradeshop.png")
     }
 };
 
@@ -494,7 +494,6 @@ class Label extends UIElement {
         this.value = value??this.value;
     }
     draw(level=lvl){
-        console.log();
         level.ctx.drawImage(this.texture,this.x,this.y)
 
         level.ctx.font = this.font;
@@ -504,6 +503,27 @@ class Label extends UIElement {
         level.ctx.fillText(this.value,this.x + this.texture.width,this.y + actualHeight/2 + this.texture.width/2)
 
     }
+}
+
+class Button extends UIElement {
+    constructor(name,value,texture=TEXTURES.empty,x,y,_onclick=function(level) {}){
+        super(name,value,texture,x,y);
+        this.onclick = _onclick;
+        this.hovered = false;
+        this.clicked = false;
+    }
+
+    tick(level=lvl){
+        if (this.x > level.controls.mousePosition.x && this.x < level.controls.mousePosition.x + level.controls.mousePosition.width && this.y > level.controls.mousePosition.y && this.y < level.controls.mousePosition.y + level.controls.mousePosition.height) {
+            this.hovered = true;
+        } else {
+            this.hovered = false;
+        }
+    }
+
+    draw(level=lvl){
+        level.ctx.drawImage(this.texture,this.x,this.y)
+   }
 }
 
 class UIContainer {
@@ -553,6 +573,8 @@ class Level {
             healthBar: new Label("healthBar",0,TEXTURES.ui.health,50,100,"#FFDDDD","20px PixelOperator,sans-serif"),
             
             generalDisplay: new Label("generalDisplay",0,TEXTURES.empty,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
+
+            upgradeShop: new Button("upgradeShop",0,TEXTURES.ui.upgradeShop,canvas.width-64,32),
         })
 
         // temp for now, probably will become THE solution

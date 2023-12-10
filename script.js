@@ -217,7 +217,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SingleShot, maxhealth = 100) {
+    constructor(x, y, width = 32, height = 32, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -268,11 +268,9 @@ class Player {
     }
     draw(level = lvl) {
         //draw player
-        if (this.invul > 0 && this.invul/10 % 2 == 0) {
+        if (this.invul > 0 && Math.round(this.invul/10) % 2 == 0) {
             let prevAlpha = level.ctx.globalAlpha;
-            ctx.globalAlpha = 0.4;
             level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
-            ctx.globalAlpha = prevAlpha;
         }
         level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
     }
@@ -341,7 +339,7 @@ class Enemy {
         for (var i = 0; i < playersSorted.length; i++){
             const player = playersSorted[i];
             if (this.x > player.x && this.x < player.x + player.width && this.y > player.y && this.y < player.y + player.height) {
-                player.takeDamage(this.damage,{direction:this.direction,strength:20});
+                player.takeDamage(this.damage,{direction:this.direction,strength:5});
             } 
         }
 
@@ -351,7 +349,7 @@ class Enemy {
         level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
     }
 
-    takeDamage(damage, level = lvl) {
+    takeDamage(damage,level=level,knockback = {direction:0,strength:0}, ignoreInvulnerability = false) {
         //This function is called from the projectiles, since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
         
@@ -360,8 +358,13 @@ class Enemy {
         if (!this.active) {
             return;
         }
-        
         this.health -= damage;
+        //deal kb dmg
+        this.xv = Math.sin(knockback.direction) * knockback.strength * deltaTime;
+        this.yv = -(Math.cos(knockback.direction) * knockback.strength * deltaTime);
+        console.log(damage,this.health,knockback);
+        this.stunned = 1000;
+
         if (this.health <= 0) {
             //get all changes of this.active before drawing
             this.onDeath(level)
@@ -404,7 +407,7 @@ class Projectile {
 
             if (this.x > enemy.x && this.x < enemy.x + enemy.width && this.y > enemy.y && this.y < enemy.y + enemy.height) {
                 //deletes both sprites
-                enemy.takeDamage(this.damage);
+                enemy.takeDamage(this.damage,level,{direction: this.direction,strength:(this.damage)/(enemy.maxhealth)});
                 this.active = false;
             }
 

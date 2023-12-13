@@ -275,9 +275,9 @@ class Player {
         //draw player
         if (this.invul > 0 && Math.round(this.invul/10) % 2 == 0) {
             let prevAlpha = level.ctx.globalAlpha;
-            level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+            level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
         }
-        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
     }
     takeDamage(damage,knockback = {direction:0,strength:0}, ignoreInvulnerability = false) {
         //This function is called from the enemies (and enemy bullets), since I don't want another tick loop
@@ -350,7 +350,7 @@ class Enemy {
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
     }
 
     takeDamage(damage,level=level,knockback = {direction:0,strength:0}, ignoreInvulnerability = false) {
@@ -422,7 +422,7 @@ class Projectile {
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
     }
 }
 
@@ -463,7 +463,7 @@ class Collectible {
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
     }
 }
 
@@ -552,6 +552,9 @@ class Level {
         this.ctx.contextSmoothingEnabled = false;
         this.ctx.mozImageSmoothingEnabled = false;
 
+        this.CAMX = width/2;
+        this.CAMY = height/2;
+
         this.players = [];
 
         this.players.push(new Player(width / 2, height / 2, 32, 32));
@@ -639,9 +642,13 @@ class Level {
         }
 
         // tick players
+        this.CAMX = width/2;
+        this.CAMY = height/2;
         this.players = this.players.filter(player => player.active);
         for (let player = 0; player < this.players.length; player++) {
             this.players[player].tick(this);
+            this.CAMX += -this.players[player].x + this.players[player].width/2;
+            this.CAMY += -this.players[player].y + this.players[player].height/2;
         }
         // tick enemies
         this.enemies = this.enemies.filter(enemy => enemy.active);

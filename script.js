@@ -255,7 +255,6 @@ class Player {
             this.stunned -= deltaTime;
             this.xv *= deltaTime/(deltaTime+10);
             this.yv *= deltaTime/(deltaTime+10);
-            console.log(this.xv,this.yv,this.x,this.y);
             if (this.xv < 1 && this.yv < 1) {
                 this.stunned = 0;
             }
@@ -293,7 +292,6 @@ class Player {
         //deal kb dmg
         this.xv = Math.sin(knockback.direction) * knockback.strength * deltaTime;
         this.yv = -(Math.cos(knockback.direction) * knockback.strength * deltaTime);
-        console.log(this.xv,this.yv,knockback);
         this.stunned = 1000;
 
         if (this.health <= 0) {
@@ -368,7 +366,6 @@ class Enemy {
         //deal kb dmg
         this.xv = Math.sin(knockback.direction) * knockback.strength * deltaTime;
         this.yv = -(Math.cos(knockback.direction) * knockback.strength * deltaTime);
-        console.log(damage,this.health,knockback);
         this.stunned = 1000;
 
         if (this.health <= 0) {
@@ -506,16 +503,18 @@ class Label extends UIElement {
 }
 
 class Button extends UIElement {
-    constructor(name,value,texture=TEXTURES.empty,x,y,_onclick=function(level) {}){
+    constructor(name,value,texture=TEXTURES.empty,x,y,width,height,_onclick=function(level) {}){
         super(name,value,texture,x,y);
+        this.width = width;
+        this.height = height;
         this.onclick = _onclick;
         this.hovered = false;
         this.clicked = false;
     }
 
     tick(level=lvl){
-        if (this.x > level.controls.mousePosition.x && this.x < level.controls.mousePosition.x + level.controls.mousePosition.width && this.y > level.controls.mousePosition.y && this.y < level.controls.mousePosition.y + level.controls.mousePosition.height) {
-            this.hovered = true;
+        if (level.controls.mousePosition.x > this.x && level.controls.mousePosition.x < this.x + this.width && level.controls.mousePosition.y > this.y && level.controls.mousePosition.y < this.y + this.height) {
+            this.hovered = true;    
         } else {
             this.hovered = false;
         }
@@ -574,7 +573,7 @@ class Level {
             
             generalDisplay: new Label("generalDisplay",0,TEXTURES.empty,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
 
-            upgradeShop: new Button("upgradeShop",0,TEXTURES.ui.upgradeShop,canvas.width-64,32),
+            upgradeShop: new Button("upgradeShop",0,TEXTURES.ui.upgradeShop,64,200,32,32),
         })
 
         // temp for now, probably will become THE solution

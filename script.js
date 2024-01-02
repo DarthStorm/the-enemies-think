@@ -1,76 +1,16 @@
 /*
 WARNING
-You probably shouldn't be here: this contains the source code for the game.
-(not like i mind... for now)
+only continue if you know what you are doing
+or not
+i really dont care
+just make backups
 
-The devlog is in the same directory, at dev.log
-Proceed if you're one of my teachers, or someone who wants to look at my code. (yay)
+here be dragons.
 
+----------------------------------          -------------------------------------
+|         Make a backup          |          | I already made a backup, continue |
+----------------------------------          -------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-oh you ignored my warning. well, welcome.
-this is my personal project for my IB thing ( i forgot the name )
-since you're here, you (hopefully) know how js works,
-and/or you're probably a teacher that is evaluating this.
-so
-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-vscode on top
-
-The Enemies Think
-TODO: think of a better name
-
-the enemy thinks. 
-
-see how long you can surive for.
-if there are loads of enemies around u and ur taking dmg a lot, enemies will stop coming
-and enemies will have a slight stat nerf
-
-if there are no enemies on the screen, enemies WILL come to you with buffs
-A LOAD OF BUFFS
-
-you also have buffs, that are very op.
-but you can have infinite.
-like +10 atk, +30% fire rate, + 5 hp, + health regen every 4 secs
-(enemies can stop hp regen)
-
-they think after 2 mins
-
-also all this is subject to change (duh)
-this is a concept with potential
-i hope
 */
 const canvas = document.createElement('canvas');
 canvas.parent = document.body;
@@ -134,6 +74,10 @@ const TEXTURES = {
         coin: loadTexture("ui/coin.png"),
         health: loadTexture("ui/health.png"),
         upgradeShop: loadTexture("ui/upgradeshop.png")
+    },
+    debug: {
+        debug1: loadTexture("debug1.png"),
+        debug2: loadTexture("debug2.png"),
     }
 };
 
@@ -188,7 +132,7 @@ const WEAPONS = {
             damage: 100,
             range: 1200,
             speed: 1,
-            size: 100,
+            size: 30,
         }, baseStats = {
             fireRate: 50,
         }),
@@ -200,7 +144,7 @@ const WEAPONS = {
             speed: 1,
             size:30,
         }, baseStats = {
-            fireRate: 700,
+            fireRate: 500,
         }),
     },
 
@@ -223,7 +167,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SonicBoom, maxhealth = 10000000) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -246,7 +190,14 @@ class Player {
         this.active = true;
     }
 
+    // for player we use a very special tick method, that, now that i think of it, was very unnecessary
+    // but im still doing it regardless not falling into technical debt
     tick(level = lvl) {
+    }
+
+    // movement to set cam x&y first
+    move(level = lvl) {
+        console.log(level.CAMX, level.CAMY)
         if (this.invul > 0) {
             this.invul -= deltaTime;
         }
@@ -264,13 +215,18 @@ class Player {
         }
         this.x += this.xv;
         this.y += this.yv;
+    }
+
+    //after we get cam x and y
+    aftertick(level = lvl){
         //point towards cursor
-        this.direction = Math.atan2(level.controls.mousePosition.x - (this.x + this.width / 2), -(level.controls.mousePosition.y - (this.y + this.height / 2)))
+        this.direction = Math.atan2((level.controls.mousePosition.x - level.CAMX) - (this.x + this.width / 2), -((level.controls.mousePosition.y - level.CAMY) - (this.y + this.height / 2)))
         if (level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this, level);
             this.attackCooldown = this.weapon.stats.fireRate;
         }
     }
+
     draw(level = lvl) {
         //draw player
         if (this.invul > 0 && Math.round(this.invul/10) % 2 == 0) {
@@ -278,6 +234,9 @@ class Player {
             level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
         }
         level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
+        //DEBUG
+        level.ctx.fillText(`x:${this.x}, y:${this.y}`,this.x+level.CAMX, this.y+level.CAMY);
+        level.ctx.fillText(`${level.controls.mousePosition.x-level.CAMX},${level.controls.mousePosition.y-level.CAMY}`,level.controls.mousePosition.x,level.controls.mousePosition.y);
     }
     takeDamage(damage,knockback = {direction:0,strength:0}, ignoreInvulnerability = false) {
         //This function is called from the enemies (and enemy bullets), since I don't want another tick loop
@@ -290,9 +249,12 @@ class Player {
         //player got hit oh no
         this.health -= damage;
         //deal kb dmg
-        this.xv = Math.sin(knockback.direction) * knockback.strength * deltaTime;
-        this.yv = -(Math.cos(knockback.direction) * knockback.strength * deltaTime);
-        this.stunned = 1000;
+
+        //DEBUG
+
+        // this.xv = Math.sin(knockback.direction) * knockback.strength * deltaTime;
+        // this.yv = -(Math.cos(knockback.direction) * knockback.strength * deltaTime);
+        // this.stunned = 1000;
 
         if (this.health <= 0) {
             //get all declarations of this.active before drawing
@@ -364,6 +326,7 @@ class Enemy {
         }
         this.health -= damage;
         //deal kb dmg
+
         this.xv = Math.sin(knockback.direction) * knockback.strength * deltaTime;
         this.yv = -(Math.cos(knockback.direction) * knockback.strength * deltaTime);
         this.stunned = 1000;
@@ -423,6 +386,10 @@ class Projectile {
 
     draw(level = lvl) {
         level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
+        if (this.type == "DebugMarker") {
+            level.ctx.font = "13px PixelOperator"
+            level.ctx.fillText(`${this.x},${this.y}`,this.x+level.CAMX,this.y+level.CAMY)
+        }
     }
 }
 
@@ -557,7 +524,7 @@ class Level {
 
         this.players = [];
 
-        this.players.push(new Player(width / 2, height / 2, 32, 32));
+        this.players.push(new Player(0,0, 32, 32));
 
         this.enemies = [];
 
@@ -613,6 +580,9 @@ class Level {
         this.controls.right = (allControls["d"] || allControls["D"] || allControls["ArrowRight"]) ?? false;
         this.controls.shoot = (allControls[" "] || mouse.down) ?? false;
 
+        //DEBUG ONLY
+        this.controls.debug = (allControls["f"] || allControls["F"]) ?? false;
+
         this.controls.mousePosition = mouse.position;
     }
 
@@ -646,9 +616,12 @@ class Level {
         this.CAMY = height/2;
         this.players = this.players.filter(player => player.active);
         for (let player = 0; player < this.players.length; player++) {
-            this.players[player].tick(this);
+            this.players[player].move(this);
             this.CAMX += -this.players[player].x + this.players[player].width/2;
             this.CAMY += -this.players[player].y + this.players[player].height/2;
+        }
+        for (let player = 0; player < this.players.length; player++) {
+            this.players[player].aftertick(this);
         }
         // tick enemies
         this.enemies = this.enemies.filter(enemy => enemy.active);
@@ -672,8 +645,18 @@ class Level {
 
     }
     draw() {
-        //draw bg
-        this.ctx.drawImage(TEXTURES.bg, 0, 0)
+        //draw bg - 9 times for scrollings
+        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX%width, 0 + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX%width, 0 + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX%width, 0 + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX%width, width + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX%width, width + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX%width, width + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX%width, -width + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX%width, -width + this.CAMY%height)
+        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX%width, -width + this.CAMY%height)
+
+
 
         for (let enemy = 0; enemy < this.enemies.length; enemy++) {
             this.enemies[enemy].draw()

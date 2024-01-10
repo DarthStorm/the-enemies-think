@@ -42,10 +42,24 @@ const allControls = {
 };
 
 const mouse = {
-    down: false,
+    down: false, // gonna be deprecated in a bit
     position: {
         x: 0,
         y: 0
+    },
+    tracker: { // for ui buttons
+        // DONT PUT ANY UI ELEMENTS AT (0,0)
+        // IT MOST LIKELY WILL MESS IT UP
+        // or not
+        downPos: {
+            x: 0,
+            y: 0,
+        },
+        clickPos: {
+            x: 0,
+            y: 0,
+        },
+        click: false
     }
 }
 
@@ -167,7 +181,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SonicBoom, maxhealth = 10000000) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Shotgun, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -197,7 +211,6 @@ class Player {
 
     // movement to set cam x&y first
     move(level = lvl) {
-        console.log(level.CAMX, level.CAMY)
         if (this.invul > 0) {
             this.invul -= deltaTime;
         }
@@ -485,6 +498,17 @@ class Button extends UIElement {
         } else {
             this.hovered = false;
         }
+
+        // capture clicks
+        if (level.controls.mouseTracker.downPos.x > this.x && level.controls.mouseTracker.downPos.x < this.x + this.width && level.controls.mouseTracker.downPos.y > this.y && level.controls.mouseTracker.downPos.y < this.y + this.height) {
+            if (level.controls.mouseTracker.clickPos.x > this.x && level.controls.mouseTracker.clickPos.x < this.x + this.width && level.controls.mouseTracker.clickPos.y > this.y && level.controls.mouseTracker.clickPos.y < this.y + this.height) {
+                if (level.controls.mouseTracker.click) {
+                    //personally i like if loops like this
+                    level.controls.mouseTracker.click = false;
+                    this.onclick();
+                }
+            }
+        }
     }
 
     draw(level=lvl){
@@ -543,7 +567,34 @@ class Level {
             
             generalDisplay: new Label("generalDisplay",0,TEXTURES.empty,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
 
-            upgradeShop: new Button("upgradeShop",0,TEXTURES.ui.upgradeShop,64,200,32,32),
+            upgradeShop: new Button("upgradeShop",0,TEXTURES.ui.upgradeShop,64,200,32,32,function (level=lvl) {
+                // onclick
+                console.log("uwu uwu uwu owo");
+                for (let i = 0; i < level.players.length; i++) {
+                    const player = level.players[i];
+                    if (player.money > 50) {
+                        player.money -= 50;
+
+                        player.weapon.projectile.count += 1;
+                        player.weapon.projectile.spread += 0.1;
+                        player.weapon.projectile.damage += 25;
+                        if (player.weapon.projectile.speed < 2) {
+                            player.weapon.projectile.speed += 0.2;
+                        }
+                        if (player.weapon.projectile.size < 12) {
+                            player.weapon.projectile.size += 0.5;
+                        }
+                        if (player.weapon.stats.fireRate > 10) {
+                            player.weapon.stats.fireRate -= 20
+                        }
+                        
+                    } else if (player.money > 10) {
+                        player.money -= 10;
+                        player.weapon.projectile.damage += 5;
+                    }
+                    
+                }
+            }),
         })
 
         // temp for now, probably will become THE solution
@@ -571,6 +622,21 @@ class Level {
                 y: 0,
             },
 
+            mouseTracker: { // for ui buttons
+                // DONT PUT ANY UI ELEMENTS AT (0,0)
+                // IT MOST LIKELY WILL MESS IT UP
+                // or not
+                downPos: {
+                    x: 0,
+                    y: 0,
+                },
+                clickPos: {
+                    x: 0,
+                    y: 0,
+                },
+                click: false
+            }
+
         }
     }
     getControls() {
@@ -584,6 +650,7 @@ class Level {
         this.controls.debug = (allControls["f"] || allControls["F"]) ?? false;
 
         this.controls.mousePosition = mouse.position;
+        this.controls.mouseTracker = mouse.tracker;
     }
 
     spawnEnemy() {
@@ -679,6 +746,7 @@ class Level {
 
 const lvl = new Level("Level 1", canvas);
 
+
 function tick() {
     lvl.tick();
 }
@@ -706,10 +774,17 @@ function addEventListeners() {
     })
     document.addEventListener("mousedown", function (e) {
         mouse.down = true;
+        mouse.tracker.downPos = {x: e.offsetX, y: e.offsetY}
     });
     document.addEventListener("mouseup", function (e) {
         mouse.down = false;
     });
+    document.addEventListener("click", function (e) {
+        // mouse.down is false, as up comes right before click
+        mouse.tracker.clickPos = {x: e.offsetX, y: e.offsetY}
+        mouse.tracker.click = true;
+    });
+
     document.addEventListener("mousemove", function (e) {
         mouse.position.x = e.offsetX;
         mouse.position.y = e.offsetY;

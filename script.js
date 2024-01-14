@@ -65,9 +65,18 @@ const mouse = {
 
 function loadTexture(src = "") {
     let x = new Image();
-    x.src = "assets/" + src;
+    x.src = "assets/textures/" + src;
     return x;
 }
+
+function loadSound(url = "") {
+    let x = new Audio("assets/sounds/" + url);
+    return {Audio: x, play: function (){
+        let y = x.cloneNode();
+        y.play();
+    } };
+}
+
 const TEXTURES = {
     empty: loadTexture('empty.png'),
     bg: loadTexture("bg.png"),
@@ -94,6 +103,11 @@ const TEXTURES = {
         debug2: loadTexture("debug2.png"),
     }
 };
+
+const SOUNDS = {
+    bwomp: loadSound('bwomp.mp3'),
+    emotionaldamaage: loadSound('emotionaldamage.mp3'),
+}
 
 function newWeapon(type_ = "", baseProjectile = {
     count: 1,

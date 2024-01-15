@@ -105,8 +105,7 @@ const TEXTURES = {
 };
 
 const SOUNDS = {
-    bwomp: loadSound('bwomp.mp3'),
-    emotionaldamaage: loadSound('emotionaldamage.mp3'),
+    shoot:loadSound("shoot.mp3"),
 }
 
 function newWeapon(type_ = "", baseProjectile = {
@@ -195,7 +194,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Shotgun, maxhealth = 100) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -251,6 +250,7 @@ class Player {
         if (level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this, level);
             this.attackCooldown = this.weapon.stats.fireRate;
+            SOUNDS.shoot.play();
         }
     }
 
@@ -327,7 +327,16 @@ class Enemy {
         this.xv = Math.sin(this.direction) * this.speed * deltaTime;
         this.yv = -(Math.cos(this.direction) * this.speed * deltaTime);
         this.x += this.xv;
-        this.y += this.yv; 
+        this.y += this.yv;
+        // enemy-to-enemy collisions
+        for (let i = 0; i < level.enemies.length; i++) {
+            const otherEnemy = level.enemies[i];
+            if (this.x > otherEnemy.x && this.x < otherEnemy.x + otherEnemy.width && this.y > otherEnemy.y && this.y < otherEnemy.y + otherEnemy.height) {
+                this.x -= this.xv;
+                this.y -= this.yv;
+            } 
+            
+        }
 
         for (var i = 0; i < playersSorted.length; i++){
             const player = playersSorted[i];
@@ -561,19 +570,17 @@ class Level {
         this.CAMY = height/2;
 
         this.players = [];
-
         this.players.push(new Player(0,0, 32, 32));
 
         this.enemies = [];
-
-        //test
-        this.enemies.push(new Enemy(0, 0, 32, 32));
-
         this.enemyspawntimer = 0;
+        this.maxEnemies = 100;
 
         this.projectiles = [];
 
         this.collectibles = [];
+
+        this.paused = false;
 
         this.uiContainer = new UIContainer({
             coinCounter: new Label("coinCounter",0,TEXTURES.ui.coin,50,50,"#FFFFFF","20px PixelOperator,sans-serif"),
@@ -583,7 +590,7 @@ class Level {
 
             upgradeShop: new Button("upgradeShop",0,TEXTURES.ui.upgradeShop,64,200,32,32,function (level=lvl) {
                 // onclick
-                console.log("uwu uwu uwu owo");
+                
                 for (let i = 0; i < level.players.length; i++) {
                     const player = level.players[i];
                     if (player.money > 50) {
@@ -608,6 +615,9 @@ class Level {
                     }
                     
                 }
+                
+                
+                level.paused = !level.paused;
             }),
         })
 
@@ -677,19 +687,26 @@ class Level {
             x: this.players[0].x,
             y: this.players[0].y
         };
+
         this.enemies.push(new Enemy(basePos.x + dist * Math.cos(deg), basePos.y + dist * Math.sin(deg), 32, 32))
 
     }
 
     tick() {
+        if (this.paused) {
+            this.uiContainer.tick(this);
+            return;
+        }
         this.getControls()
 
         // level tick:
         // enemy spawning
         this.enemyspawntimer -= deltaTime
         if (this.enemyspawntimer <= 0) {
-            this.enemyspawntimer = 2000
-            this.spawnEnemy()
+            this.enemyspawntimer = 1
+            if (this.enemies.length < this.maxEnemies) {
+                this.spawnEnemy()
+            }
         }
 
         // tick players

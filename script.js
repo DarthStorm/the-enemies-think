@@ -32,10 +32,8 @@ document.fonts.add(PixelOperator)
 PixelOperator.load()
 
 document.fonts.ready.then((font) => {
-  console.log('Fonts loaded');
+    console.log('Fonts loaded');
 });
-
-
 
 const allControls = {
 
@@ -71,10 +69,13 @@ function loadTexture(src = "") {
 
 function loadSound(url = "") {
     let x = new Audio("assets/sounds/" + url);
-    return {Audio: x, play: function (){
-        let y = x.cloneNode();
-        y.play();
-    } };
+    return {
+        Audio: x,
+        play: function () {
+            let y = x.cloneNode();
+            y.play();
+        }
+    };
 }
 
 const TEXTURES = {
@@ -106,11 +107,11 @@ const TEXTURES = {
 };
 
 const SOUNDS = {
-    weapon:{
-        shoot:loadSound("shoot.mp3"),
+    weapon: {
+        shoot: loadSound("shoot.mp3"),
     },
-    collectible:{
-        coin:loadSound("coin.mp3"),
+    collectible: {
+        coin: loadSound("coin.mp3"),
     }
 }
 
@@ -119,7 +120,7 @@ function newWeapon(type_ = "", baseProjectile = {
     spread: 0,
     damage: 10,
     range: 2000,
-    speed:0.7,
+    speed: 0.7,
     size: 8,
 
 }, baseStats = {
@@ -158,7 +159,7 @@ function newWeapon(type_ = "", baseProjectile = {
 const WEAPONS = {
     //weapons
     // ridiculously op:
-    op:{
+    op: {
         SonicBoom: newWeapon("SonicBoom", baseProjectile = {
             count: 100,
             spread: 1,
@@ -175,12 +176,11 @@ const WEAPONS = {
             damage: 1000,
             range: 2400,
             speed: 1,
-            size:30,
+            size: 30,
         }, baseStats = {
             fireRate: 500,
         }),
     },
-
 
     //normal weapons
     Pistol: newWeapon("Pistol"),
@@ -225,8 +225,7 @@ class Player {
 
     // for player we use a very special tick method, that, now that i think of it, was very unnecessary
     // but im still doing it regardless not falling into technical debt
-    tick(level = lvl) {
-    }
+    tick(level = lvl) {}
 
     // movement to set cam x&y first
     move(level = lvl) {
@@ -236,8 +235,8 @@ class Player {
         this.attackCooldown -= deltaTime;
         if (this.stunned > 0) {
             this.stunned -= deltaTime;
-            this.xv *= deltaTime/(deltaTime+10);
-            this.yv *= deltaTime/(deltaTime+10);
+            this.xv *= deltaTime / (deltaTime + 10);
+            this.yv *= deltaTime / (deltaTime + 10);
             if (this.xv < 1 && this.yv < 1) {
                 this.stunned = 0;
             }
@@ -250,7 +249,7 @@ class Player {
     }
 
     //after we get cam x and y
-    aftertick(level = lvl){
+    aftertick(level = lvl) {
         //point towards cursor
         this.direction = Math.atan2((level.controls.mousePosition.x - level.CAMX) - (this.x + this.width / 2), -((level.controls.mousePosition.y - level.CAMY) - (this.y + this.height / 2)))
         if (level.controls.shoot && this.attackCooldown <= 0) {
@@ -262,16 +261,19 @@ class Player {
 
     draw(level = lvl) {
         //draw player
-        if (this.invul > 0 && Math.round(this.invul/10) % 2 == 0) {
+        if (this.invul > 0 && Math.round(this.invul / 10) % 2 == 0) {
             let prevAlpha = level.ctx.globalAlpha;
-            level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
+            level.ctx.drawImage(this.texture, this.x + level.CAMX, this.y + level.CAMY, this.width, this.height);
         }
-        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x + level.CAMX, this.y + level.CAMY, this.width, this.height);
         //DEBUG
-        level.ctx.fillText(`x:${this.x}, y:${this.y}`,this.x+level.CAMX, this.y+level.CAMY);
-        level.ctx.fillText(`${level.controls.mousePosition.x-level.CAMX},${level.controls.mousePosition.y-level.CAMY}`,level.controls.mousePosition.x,level.controls.mousePosition.y);
+        level.ctx.fillText(`x:${this.x}, y:${this.y}`, this.x + level.CAMX, this.y + level.CAMY);
+        level.ctx.fillText(`${level.controls.mousePosition.x-level.CAMX},${level.controls.mousePosition.y-level.CAMY}`, level.controls.mousePosition.x, level.controls.mousePosition.y);
     }
-    takeDamage(damage,knockback = {direction:0,strength:0}, ignoreInvulnerability = false) {
+    takeDamage(damage, knockback = {
+        direction: 0,
+        strength: 0
+    }, ignoreInvulnerability = false) {
         //This function is called from the enemies (and enemy bullets), since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
         //ignoreInvulnerability just forcefully deals damage
@@ -304,7 +306,7 @@ class Player {
 }
 
 class Enemy {
-    constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40,texture = TEXTURES.enemy.basic) {
+    constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40, texture = TEXTURES.enemy.basic) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -342,43 +344,48 @@ class Enemy {
             if (this.x > otherEnemy.x && this.x < otherEnemy.x + otherEnemy.width && this.y > otherEnemy.y && this.y < otherEnemy.y + otherEnemy.height) {
                 // start merge timer
                 // dont question it
-                this.mergeTimer += deltaTime/2;
-                otherEnemy.mergeTimer += deltaTime/2;
+                this.mergeTimer += deltaTime / 2;
+                otherEnemy.mergeTimer += deltaTime / 2;
                 // when they stuck for too long they merge (1 sec?)
                 if (this.mergeTimer > 1000 && otherEnemy.mergeTimer > 1000) {
-                    let merged = new Enemy((this.x+otherEnemy.x)/2,(this.y+otherEnemy.y)/2,(this.width + otherEnemy.width)/1.5,(this.height + otherEnemy.height)/1.5,(this.direction+otherEnemy.direction)/2,this.maxhealth+otherEnemy.maxhealth);
-                    merged.speed = (this.speed + otherEnemy.speed)/1.5;
+                    let merged = new Enemy((this.x + otherEnemy.x) / 2, (this.y + otherEnemy.y) / 2, (this.width + otherEnemy.width) / 1.5, (this.height + otherEnemy.height) / 1.5, (this.direction + otherEnemy.direction) / 2, this.maxhealth + otherEnemy.maxhealth);
+                    merged.speed = (this.speed + otherEnemy.speed) / 1.5;
                     merged.health = this.health + otherEnemy.health;
                     merged.damage = this.damage + otherEnemy.damage;
                     merged.worth = this.worth + otherEnemy.worth;
                     level.enemies.push(merged);
                     console.log(merged);
 
-
                     this.active = false;
                     otherEnemy.active = false;
                 }
-            } 
-            
+            }
+
         }
 
-        for (var i = 0; i < playersSorted.length; i++){
+        for (var i = 0; i < playersSorted.length; i++) {
             const player = playersSorted[i];
             if (this.x > player.x && this.x < player.x + player.width && this.y > player.y && this.y < player.y + player.height) {
-                player.takeDamage(this.damage,{direction:this.direction,strength:5});
-            } 
+                player.takeDamage(this.damage, {
+                    direction: this.direction,
+                    strength: 5
+                });
+            }
         }
 
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x + level.CAMX, this.y + level.CAMY, this.width, this.height);
     }
 
-    takeDamage(damage,level=level,knockback = {direction:0,strength:0}, ignoreInvulnerability = false) {
+    takeDamage(damage, level = level, knockback = {
+        direction: 0,
+        strength: 0
+    }, ignoreInvulnerability = false) {
         //This function is called from the projectiles, since I don't want another tick loop
         //Deducts HP and kills if hp <= 0
-        
+
         //for some reason, the enemy dies multiple times in a single tick
         //thank goodness I had the most op weapon ever, otherwise I wouldn't have found this
         if (!this.active) {
@@ -400,7 +407,7 @@ class Enemy {
 
     onDeath(level = lvl) {
         this.active = false;
-        level.collectibles.push(new Collectible(this.x, this.y, 16, 16, 1,TEXTURES.collectible.coin))
+        level.collectibles.push(new Collectible(this.x, this.y, 16, 16, 1, TEXTURES.collectible.coin))
     }
 }
 
@@ -433,7 +440,10 @@ class Projectile {
 
             if (this.x > enemy.x && this.x < enemy.x + enemy.width && this.y > enemy.y && this.y < enemy.y + enemy.height) {
                 //deletes both sprites
-                enemy.takeDamage(this.damage,level,{direction: this.direction,strength:(this.damage)/(enemy.maxhealth)});
+                enemy.takeDamage(this.damage, level, {
+                    direction: this.direction,
+                    strength: (this.damage) / (enemy.maxhealth)
+                });
                 this.active = false;
             }
 
@@ -445,16 +455,16 @@ class Projectile {
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x + level.CAMX, this.y + level.CAMY, this.width, this.height);
         if (this.type == "DebugMarker") {
             level.ctx.font = "13px PixelOperator"
-            level.ctx.fillText(`${this.x},${this.y}`,this.x+level.CAMX,this.y+level.CAMY)
+            level.ctx.fillText(`${this.x},${this.y}`, this.x + level.CAMX, this.y + level.CAMY)
         }
     }
 }
 
 class Collectible {
-    constructor(x, y, width = 16, height = 16, value=1, texture = TEXTURES.collectible.coin) {
+    constructor(x, y, width = 16, height = 16, value = 1, texture = TEXTURES.collectible.coin) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -462,12 +472,12 @@ class Collectible {
         this.texture = texture;
         this.speed = 5;
         this.value = value,
-        this.direction = 0;
+            this.direction = 0;
 
         this.active = true;
     }
 
-    tick(level=lvl) {
+    tick(level = lvl) {
         //when colliding with a player, give them money
         var playersSorted = level.players.concat()
         playersSorted.sort(function (a, b) {
@@ -481,22 +491,22 @@ class Collectible {
                 target.money += this.value;
                 SOUNDS.collectible.coin.play()
                 this.active = false;
-            } else if (dist < 300){
+            } else if (dist < 300) {
                 this.direction = Math.atan2(target.x - (this.x), -(target.y - (this.y)))
-                this.x += Math.sin(this.direction) * ((299-dist)/200 + 0.1) * deltaTime;
-                this.y -= Math.cos(this.direction) * ((299-dist)/200 + 0.1) * deltaTime;
+                this.x += Math.sin(this.direction) * ((299 - dist) / 200 + 0.1) * deltaTime;
+                this.y -= Math.cos(this.direction) * ((299 - dist) / 200 + 0.1) * deltaTime;
             }
         }
-        
+
     }
 
     draw(level = lvl) {
-        level.ctx.drawImage(this.texture, this.x+level.CAMX, this.y+level.CAMY, this.width, this.height);
+        level.ctx.drawImage(this.texture, this.x + level.CAMX, this.y + level.CAMY, this.width, this.height);
     }
 }
 
 class UIElement {
-    constructor(name,value,texture,x,y,visible){
+    constructor(name, value, texture, x, y, visible) {
         this.name = name;
         this.value = value;
         this.texture = texture
@@ -505,40 +515,40 @@ class UIElement {
         this.visible = visible;
     }
 
-    tick(level=lvl){}
-    draw(level=lvl){}
+    tick(level = lvl) {}
+    draw(level = lvl) {}
 }
 
 class Label extends UIElement {
-    constructor(name,value,texture=TEXTURES.empty,x,y,color="#FFFFFF",font="10px PixelOperator,monospace,sans-serif",visible=true){
-        super(name,value,texture,x,y,visible)
+    constructor(name, value, texture = TEXTURES.empty, x, y, color = "#FFFFFF", font = "10px PixelOperator,monospace,sans-serif", visible = true) {
+        super(name, value, texture, x, y, visible)
         this.color = color;
         this.font = font;
-        
-   }
-    tick(level=lvl,value=null){
-        this.value = value??this.value;
+
     }
-    draw(level=lvl){
+    tick(level = lvl, value = null) {
+        this.value = value ?? this.value;
+    }
+    draw(level = lvl) {
         if (!this.visible) {
             return;
         }
-        level.ctx.drawImage(this.texture,this.x,this.y)
+        level.ctx.drawImage(this.texture, this.x, this.y)
         if (this.value != "") {
             // this.value == "" = no text needed
             level.ctx.font = this.font;
             level.ctx.fillStyle = this.color;
             let metrics = level.ctx.measureText(this.value)
             let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-            level.ctx.fillText(this.value,this.x + this.texture.width,this.y + actualHeight/2 + this.texture.width/2)
+            level.ctx.fillText(this.value, this.x + this.texture.width, this.y + actualHeight / 2 + this.texture.width / 2)
         }
 
     }
 }
 
 class Button extends UIElement {
-    constructor(name,value,texture=TEXTURES.empty,x,y,width,height,_onclick=function(level) {}){
-        super(name,value,texture,x,y);
+    constructor(name, value, texture = TEXTURES.empty, x, y, width, height, _onclick = function (level) {}) {
+        super(name, value, texture, x, y);
         this.width = width;
         this.height = height;
         this.onclick = _onclick;
@@ -546,9 +556,9 @@ class Button extends UIElement {
         this.clicked = false;
     }
 
-    tick(level=lvl){
+    tick(level = lvl) {
         if (level.controls.mousePosition.x > this.x && level.controls.mousePosition.x < this.x + this.width && level.controls.mousePosition.y > this.y && level.controls.mousePosition.y < this.y + this.height) {
-            this.hovered = true;    
+            this.hovered = true;
         } else {
             this.hovered = false;
         }
@@ -565,23 +575,23 @@ class Button extends UIElement {
         }
     }
 
-    draw(level=lvl){
-        level.ctx.drawImage(this.texture,this.x,this.y)
-   }
+    draw(level = lvl) {
+        level.ctx.drawImage(this.texture, this.x, this.y)
+    }
 }
 
 class UIContainer {
-    constructor(uiElements = {}){
+    constructor(uiElements = {}) {
         this.uiElements = uiElements;
     }
 
-    tick(level=lvl){
+    tick(level = lvl) {
         for (let uiElement in this.uiElements) {
             this.uiElements[uiElement].tick(level);
         }
     }
 
-    draw(level=lvl){
+    draw(level = lvl) {
         for (let uiElement in this.uiElements) {
             this.uiElements[uiElement].draw(level);
         }
@@ -597,11 +607,11 @@ class Level {
         this.ctx.contextSmoothingEnabled = false;
         this.ctx.mozImageSmoothingEnabled = false;
 
-        this.CAMX = width/2;
-        this.CAMY = height/2;
+        this.CAMX = width / 2;
+        this.CAMY = height / 2;
 
         this.players = [];
-        this.players.push(new Player(0,0, 32, 32));
+        this.players.push(new Player(0, 0, 32, 32));
 
         this.enemies = [];
         this.enemyspawntimer = 0;
@@ -614,17 +624,17 @@ class Level {
         this.paused = false;
 
         this.uiContainer = new UIContainer({
-            coinCounter: new Label("coinCounter",0,TEXTURES.ui.coin,50,50,"#FFFFFF","20px PixelOperator,sans-serif"),
-            healthBar: new Label("healthBar",0,TEXTURES.ui.health,50,100,"#FFDDDD","20px PixelOperator,sans-serif"),
-            
-            generalDisplay: new Label("generalDisplay",0,TEXTURES.empty,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
-            
+            coinCounter: new Label("coinCounter", 0, TEXTURES.ui.coin, 50, 50, "#FFFFFF", "20px PixelOperator,sans-serif"),
+            healthBar: new Label("healthBar", 0, TEXTURES.ui.health, 50, 100, "#FFDDDD", "20px PixelOperator,sans-serif"),
+
+            generalDisplay: new Label("generalDisplay", 0, TEXTURES.empty, 50, 700, "#CCCCFF", "40px PixelOperator,sans-serif"),
+
             upgradeContainer: new UIContainer({
-                upgradeShop: new Label("upgradeShop", "", TEXTURES.ui.upgradeShop,272,180,"#FFFFFF","20px PixelOperator,sans-serif",false),
-                upgradeButton: new Button("upgradeButton",0,TEXTURES.ui.upgradeButton,64,200,32,32,function (level=lvl) {
+                upgradeShop: new Label("upgradeShop", "", TEXTURES.ui.upgradeShop, 272, 180, "#FFFFFF", "20px PixelOperator,sans-serif", false),
+                upgradeButton: new Button("upgradeButton", 0, TEXTURES.ui.upgradeButton, 64, 200, 32, 32, function (level = lvl) {
                     // onclick
                     level.paused = !level.paused;
-    
+
                     //its js what can go wrong...
                     level.uiContainer.uiElements.upgradeContainer.uiElements.upgradeShop.visible = !level.uiContainer.uiElements.upgradeContainer.uiElements.upgradeShop.visible;
                 }),
@@ -634,16 +644,15 @@ class Level {
 
         // temp for now, probably will become THE solution
 
-        this.uiContainer.uiElements.coinCounter.tick = function (level,value) {
+        this.uiContainer.uiElements.coinCounter.tick = function (level, value) {
             this.value = "MONEY: " + level.players[0].money;
         }
-        this.uiContainer.uiElements.healthBar.tick = function (level,value) {
+        this.uiContainer.uiElements.healthBar.tick = function (level, value) {
             this.value = "HP: " + level.players[0].health;
         }
-        this.uiContainer.uiElements.generalDisplay.tick = function (level,value) {
-            this.value = "FPS: " + String(Math.round(1000/deltaTime)).padStart(3, '0') + ", DT: " + deltaTime;
+        this.uiContainer.uiElements.generalDisplay.tick = function (level, value) {
+            this.value = "FPS: " + String(Math.round(1000 / deltaTime)).padStart(3, '0') + ", DT: " + deltaTime;
         }
-
 
         this.controls = {
             up: false,
@@ -702,7 +711,7 @@ class Level {
         this.enemies.push(new Enemy(basePos.x + dist * Math.cos(deg), basePos.y + dist * Math.sin(deg), 32, 32))
 
     }
-    
+
     tick() {
         if (this.paused) {
             this.uiContainer.tick(this);
@@ -710,7 +719,7 @@ class Level {
         }
         this.getControls()
         this.uiContainer.tick(this);
-        
+
         // level tick:
         // enemy spawning
         this.enemyspawntimer -= deltaTime
@@ -722,13 +731,13 @@ class Level {
         }
 
         // tick players
-        this.CAMX = width/2;
-        this.CAMY = height/2;
+        this.CAMX = width / 2;
+        this.CAMY = height / 2;
         this.players = this.players.filter(player => player.active);
         for (let player = 0; player < this.players.length; player++) {
             this.players[player].move(this);
-            this.CAMX += -this.players[player].x + this.players[player].width/2;
-            this.CAMY += -this.players[player].y + this.players[player].height/2;
+            this.CAMX += -this.players[player].x + this.players[player].width / 2;
+            this.CAMY += -this.players[player].y + this.players[player].height / 2;
         }
         for (let player = 0; player < this.players.length; player++) {
             this.players[player].aftertick(this);
@@ -751,22 +760,19 @@ class Level {
             this.collectibles[collectibles].tick(this)
         }
 
-
     }
     draw() {
         // draw bg - 9 times for scrollings
         // probably could optimize it better
-        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX%width, 0 + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX%width, 0 + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX%width, 0 + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX%width, width + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX%width, width + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX%width, width + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX%width, -width + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX%width, -width + this.CAMY%height)
-        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX%width, -width + this.CAMY%height)
-
-
+        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX % width, 0 + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX % width, 0 + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX % width, 0 + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX % width, width + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX % width, width + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX % width, width + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX % width, -width + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, width + this.CAMX % width, -width + this.CAMY % height)
+        this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX % width, -width + this.CAMY % height)
 
         for (let enemy = 0; enemy < this.enemies.length; enemy++) {
             this.enemies[enemy].draw()
@@ -788,7 +794,6 @@ class Level {
 }
 
 const lvl = new Level("Level 1", canvas);
-
 
 function tick() {
     lvl.tick();
@@ -817,14 +822,20 @@ function addEventListeners() {
     })
     document.addEventListener("mousedown", function (e) {
         mouse.down = true;
-        mouse.tracker.downPos = {x: e.offsetX, y: e.offsetY}
+        mouse.tracker.downPos = {
+            x: e.offsetX,
+            y: e.offsetY
+        }
     });
     document.addEventListener("mouseup", function (e) {
         mouse.down = false;
     });
     document.addEventListener("click", function (e) {
         // mouse.down is false, as up comes right before click
-        mouse.tracker.clickPos = {x: e.offsetX, y: e.offsetY}
+        mouse.tracker.clickPos = {
+            x: e.offsetX,
+            y: e.offsetY
+        }
         mouse.tracker.click = true;
     });
 

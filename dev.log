@@ -234,6 +234,18 @@ time to fix the shop
 
 on second thoughts, ima add a scrolling bg
 
-day 112 20/1/24
+day 112 10/1/24
 make placeholder upgrade system today
 on a side note: haha funny button
+
+day 117 15/1/24
+added shooting sfx
+make enemy collisions
+they don't work
+making them merge instead
+if enemies collide too long (timer +1 when enemies collide)
+then destroy both (NOT KILL), make a new enemy: more rewards and harder to kill
+way harder
+
+day 118 16/1/24
+last day to make real progress

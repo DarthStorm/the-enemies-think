@@ -105,7 +105,12 @@ const TEXTURES = {
 };
 
 const SOUNDS = {
-    shoot:loadSound("shoot.mp3"),
+    weapon:{
+        shoot:loadSound("shoot.mp3"),
+    },
+    collectible:{
+        coin:loadSound("coin.mp3"),
+    }
 }
 
 function newWeapon(type_ = "", baseProjectile = {
@@ -194,7 +199,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SonicBoom, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -250,7 +255,7 @@ class Player {
         if (level.controls.shoot && this.attackCooldown <= 0) {
             this.weapon.onAttack(this, level);
             this.attackCooldown = this.weapon.stats.fireRate;
-            SOUNDS.shoot.play();
+            SOUNDS.weapon.shoot.play();
         }
     }
 
@@ -298,7 +303,7 @@ class Player {
 }
 
 class Enemy {
-    constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40, texture = TEXTURES.enemy.basic) {
+    constructor(x, y, width = 32, height = 32, direction = 0, maxhealth = 40,texture = TEXTURES.enemy.basic) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -311,9 +316,11 @@ class Enemy {
         this.speed = 0.1;
         this.health = this.maxhealth;
         this.damage = 5
+        this.worth = 1;
 
         this.stunned = 0;
         this.active = true;
+        this.mergeTimer = 0;
     }
 
     tick(level = lvl) {
@@ -332,8 +339,24 @@ class Enemy {
         for (let i = 0; i < level.enemies.length; i++) {
             const otherEnemy = level.enemies[i];
             if (this.x > otherEnemy.x && this.x < otherEnemy.x + otherEnemy.width && this.y > otherEnemy.y && this.y < otherEnemy.y + otherEnemy.height) {
-                this.x -= this.xv;
-                this.y -= this.yv;
+                // start merge timer
+                // dont question it
+                this.mergeTimer += deltaTime/2;
+                otherEnemy.mergeTimer += deltaTime/2;
+                // when they stuck for too long they merge (1 sec?)
+                if (this.mergeTimer > 1000 && otherEnemy.mergeTimer > 1000) {
+                    let merged = new Enemy((this.x+otherEnemy.x)/2,(this.y+otherEnemy.y)/2,(this.width + otherEnemy.width)/1.5,(this.height + otherEnemy.height)/1.5,(this.direction+otherEnemy.direction)/2,this.maxhealth+otherEnemy.maxhealth);
+                    merged.speed = (this.speed + otherEnemy.speed)/1.5;
+                    merged.health = this.health + otherEnemy.health;
+                    merged.damage = this.damage + otherEnemy.damage;
+                    merged.worth = this.worth + otherEnemy.worth;
+                    level.enemies.push(merged);
+                    console.log(merged);
+
+
+                    this.active = false;
+                    otherEnemy.active = false;
+                }
             } 
             
         }
@@ -455,6 +478,7 @@ class Collectible {
             let dist = Math.sqrt((target.x - this.x) ** 2 + (target.y - this.y) ** 2)
             if (dist < target.width) {
                 target.money += this.value;
+                SOUNDS.collectible.coin.play()
                 this.active = false;
             } else if (dist < 300){
                 this.direction = Math.atan2(target.x - (this.x), -(target.y - (this.y)))
@@ -703,7 +727,7 @@ class Level {
         // enemy spawning
         this.enemyspawntimer -= deltaTime
         if (this.enemyspawntimer <= 0) {
-            this.enemyspawntimer = 1
+            this.enemyspawntimer = 2000;
             if (this.enemies.length < this.maxEnemies) {
                 this.spawnEnemy()
             }

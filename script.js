@@ -96,7 +96,8 @@ const TEXTURES = {
     ui: {
         coin: loadTexture("ui/coin.png"),
         health: loadTexture("ui/health.png"),
-        upgradeShop: loadTexture("ui/upgradeshop.png")
+        upgradeButton: loadTexture("ui/upgradebutton.png"),
+        upgradeShop: loadTexture("ui/upgradeShop.png"),
     },
     debug: {
         debug1: loadTexture("debug1.png"),
@@ -495,12 +496,13 @@ class Collectible {
 }
 
 class UIElement {
-    constructor(name,value,texture,x,y){
+    constructor(name,value,texture,x,y,visible){
         this.name = name;
         this.value = value;
         this.texture = texture
         this.x = x;
         this.y = y;
+        this.visible = visible;
     }
 
     tick(level=lvl){}
@@ -508,8 +510,8 @@ class UIElement {
 }
 
 class Label extends UIElement {
-    constructor(name,value,texture=TEXTURES.empty,x,y,color="#FFFFFF",font="10px PixelOperator,monospace,sans-serif"){
-        super(name,value,texture,x,y)
+    constructor(name,value,texture=TEXTURES.empty,x,y,color="#FFFFFF",font="10px PixelOperator,monospace,sans-serif",visible=true){
+        super(name,value,texture,x,y,visible)
         this.color = color;
         this.font = font;
         
@@ -518,13 +520,18 @@ class Label extends UIElement {
         this.value = value??this.value;
     }
     draw(level=lvl){
+        if (!this.visible) {
+            return;
+        }
         level.ctx.drawImage(this.texture,this.x,this.y)
-
-        level.ctx.font = this.font;
-        level.ctx.fillStyle = this.color;
-        let metrics = level.ctx.measureText(this.value)
-        let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-        level.ctx.fillText(this.value,this.x + this.texture.width,this.y + actualHeight/2 + this.texture.width/2)
+        if (this.value != "") {
+            // this.value == "" = no text needed
+            level.ctx.font = this.font;
+            level.ctx.fillStyle = this.color;
+            let metrics = level.ctx.measureText(this.value)
+            let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+            level.ctx.fillText(this.value,this.x + this.texture.width,this.y + actualHeight/2 + this.texture.width/2)
+        }
 
     }
 }
@@ -611,38 +618,18 @@ class Level {
             healthBar: new Label("healthBar",0,TEXTURES.ui.health,50,100,"#FFDDDD","20px PixelOperator,sans-serif"),
             
             generalDisplay: new Label("generalDisplay",0,TEXTURES.empty,50,700,"#CCCCFF","40px PixelOperator,sans-serif"),
-
-            upgradeShop: new Button("upgradeShop",0,TEXTURES.ui.upgradeShop,64,200,32,32,function (level=lvl) {
-                // onclick
-                
-                for (let i = 0; i < level.players.length; i++) {
-                    const player = level.players[i];
-                    if (player.money > 50) {
-                        player.money -= 50;
-
-                        player.weapon.projectile.count += 1;
-                        player.weapon.projectile.spread += 0.1;
-                        player.weapon.projectile.damage += 25;
-                        if (player.weapon.projectile.speed < 2) {
-                            player.weapon.projectile.speed += 0.2;
-                        }
-                        if (player.weapon.projectile.size < 12) {
-                            player.weapon.projectile.size += 0.5;
-                        }
-                        if (player.weapon.stats.fireRate > 10) {
-                            player.weapon.stats.fireRate -= 20
-                        }
-                        
-                    } else if (player.money > 10) {
-                        player.money -= 10;
-                        player.weapon.projectile.damage += 5;
-                    }
-                    
-                }
-                
-                
-                level.paused = !level.paused;
+            
+            upgradeContainer: new UIContainer({
+                upgradeShop: new Label("upgradeShop", "", TEXTURES.ui.upgradeShop,272,180,"#FFFFFF","20px PixelOperator,sans-serif",false),
+                upgradeButton: new Button("upgradeButton",0,TEXTURES.ui.upgradeButton,64,200,32,32,function (level=lvl) {
+                    // onclick
+                    level.paused = !level.paused;
+    
+                    //its js what can go wrong...
+                    level.uiContainer.uiElements.upgradeContainer.uiElements.upgradeShop.visible = !level.uiContainer.uiElements.upgradeContainer.uiElements.upgradeShop.visible;
+                }),
             }),
+
         })
 
         // temp for now, probably will become THE solution
@@ -715,14 +702,15 @@ class Level {
         this.enemies.push(new Enemy(basePos.x + dist * Math.cos(deg), basePos.y + dist * Math.sin(deg), 32, 32))
 
     }
-
+    
     tick() {
         if (this.paused) {
             this.uiContainer.tick(this);
             return;
         }
         this.getControls()
-
+        this.uiContainer.tick(this);
+        
         // level tick:
         // enemy spawning
         this.enemyspawntimer -= deltaTime
@@ -763,11 +751,11 @@ class Level {
             this.collectibles[collectibles].tick(this)
         }
 
-        this.uiContainer.tick(this);
 
     }
     draw() {
-        //draw bg - 9 times for scrollings
+        // draw bg - 9 times for scrollings
+        // probably could optimize it better
         this.ctx.drawImage(TEXTURES.bg, 0 + this.CAMX%width, 0 + this.CAMY%height)
         this.ctx.drawImage(TEXTURES.bg, width + this.CAMX%width, 0 + this.CAMY%height)
         this.ctx.drawImage(TEXTURES.bg, -width + this.CAMX%width, 0 + this.CAMY%height)

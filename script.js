@@ -112,12 +112,16 @@ const SOUNDS = {
     },
     collectible: {
         coin: loadSound("coin.mp3"),
+    },
+    bgm: {
+        normal_1: loadSound("bgm1.mp3"),
     }
 }
 
 function newWeapon(type_ = "", baseProjectile = {
     count: 1,
     spread: 0,
+    damage: 20,
     damage: 20,
     range: 2000,
     speed: 0.7,
@@ -154,6 +158,16 @@ function newWeapon(type_ = "", baseProjectile = {
     }
 
     return Weapon;
+}
+
+function updateWeaponStats(base=WEAPONS.Pistol,stats=new Player().upgradeStats) {
+    base.projectile.count += stats.projectile.count;
+    base.projectile.damage += stats.projectile.damage;
+    base.projectile.range += stats.projectile.range;
+    base.projectile.size += stats.projectile.size;
+    base.projectile.speed += stats.projectile.speed;
+    base.projectile.spread += stats.projectile.spread;
+    base.stats.fireRate += stats.fireRate;
 }
 
 const WEAPONS = {
@@ -195,12 +209,24 @@ const WEAPONS = {
         baseStats = {
             fireRate: 800,
         }),
+    SMG: newWeapon("SMG", baseProjectile = {
+            count: 1,
+            spread: 0,
+            damage: 8,
+            range: 1000,
+            speed: 0.7,
+            size: 8,
+        },
+        baseStats = {
+            fireRate: 300,
+        }),
+
 
 };
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.SMG, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -217,6 +243,18 @@ class Player {
         this.health = this.maxhealth;
         this.invul = 0;
         this.stunned = 0;
+
+        this.upgradeStats = {
+            projectile:{
+                count: 0,
+                spread: 0,
+                damage: 0,
+                range: 0,
+                speed: 0,
+                size: 0,
+            },
+            fireRate: 0,
+        }
 
         this.money = 0;
 
@@ -246,6 +284,8 @@ class Player {
         }
         this.x += this.xv;
         this.y += this.yv;
+
+        
     }
 
     //after we get cam x and y
@@ -257,6 +297,8 @@ class Player {
             this.attackCooldown = this.weapon.stats.fireRate;
             SOUNDS.weapon.shoot.play();
         }
+        if (level.controls.pistol) {
+        }
     }
 
     draw(level = lvl) {
@@ -266,9 +308,9 @@ class Player {
             level.ctx.drawImage(this.texture, this.x + level.CAMX, this.y + level.CAMY, this.width, this.height);
         }
         level.ctx.drawImage(this.texture, this.x + level.CAMX, this.y + level.CAMY, this.width, this.height);
-        //DEBUG
-        level.ctx.fillText(`x:${this.x}, y:${this.y}`, this.x + level.CAMX, this.y + level.CAMY);
-        level.ctx.fillText(`${level.controls.mousePosition.x-level.CAMX},${level.controls.mousePosition.y-level.CAMY}`, level.controls.mousePosition.x, level.controls.mousePosition.y);
+        // //DEBUG
+        // level.ctx.fillText(`x:${this.x}, y:${this.y}`, this.x + level.CAMX, this.y + level.CAMY);
+        // level.ctx.fillText(`${level.controls.mousePosition.x-level.CAMX},${level.controls.mousePosition.y-level.CAMY}`, level.controls.mousePosition.x, level.controls.mousePosition.y);
     }
     takeDamage(damage, knockback = {
         direction: 0,
@@ -327,6 +369,7 @@ class Enemy {
     }
 
     tick(level = lvl) {
+        
         var playersSorted = level.players.concat() // makes a new array. but HOW
         playersSorted.sort(function (a, b) {
             // dist between 2 points
@@ -334,8 +377,18 @@ class Enemy {
         });
 
         this.direction = Math.atan2(playersSorted[0].x - (this.x), -(playersSorted[0].y - (this.y)))
-        this.xv = Math.sin(this.direction) * this.speed * deltaTime;
-        this.yv = -(Math.cos(this.direction) * this.speed * deltaTime);
+        if (this.stunned > 0) {
+            this.stunned -= deltaTime;
+            this.xv *= deltaTime / (deltaTime + 10);
+            this.yv *= deltaTime / (deltaTime + 10);
+            if (this.xv < 1 && this.yv < 1) {
+                this.stunned = 0;
+            }
+        } else {
+            this.xv = Math.sin(this.direction) * this.speed * deltaTime;
+            this.yv = -(Math.cos(this.direction) * this.speed * deltaTime);
+        }
+
         this.x += this.xv;
         this.y += this.yv;
         // enemy-to-enemy collisions
@@ -360,7 +413,6 @@ class Enemy {
                     otherEnemy.active = false;
                 }
             }
-
         }
 
         for (var i = 0; i < playersSorted.length; i++) {
@@ -581,17 +633,24 @@ class Button extends UIElement {
 }
 
 class UIContainer {
-    constructor(uiElements = {}) {
+    constructor(uiElements = {},visible = true) {
         this.uiElements = uiElements;
+        this.visible = visible;
     }
 
     tick(level = lvl) {
+        if (!this.visible) {
+            return
+        }
         for (let uiElement in this.uiElements) {
             this.uiElements[uiElement].tick(level);
         }
     }
-
+    
     draw(level = lvl) {
+        if (!this.visible) {
+            return
+        }
         for (let uiElement in this.uiElements) {
             this.uiElements[uiElement].draw(level);
         }
@@ -662,7 +721,9 @@ class Level {
             left: false,
             right: false,
             shoot: false,
-
+            pistol: false,
+            shotgun: false,
+            smg: false,
             mousePosition: {
                 x: 0,
                 y: 0,
@@ -691,6 +752,10 @@ class Level {
         this.controls.left = (allControls["a"] || allControls["A"] || allControls["ArrowLeft"]) ?? false;
         this.controls.right = (allControls["d"] || allControls["D"] || allControls["ArrowRight"]) ?? false;
         this.controls.shoot = (allControls[" "] || mouse.down) ?? false;
+        
+        this.controls.pistol = (allControls["1"]) ?? false;
+        this.controls.shotgun = (allControls["2"]) ?? false;
+        this.controls.smg = (allControls["3"]) ?? false;
 
         //DEBUG ONLY
         this.controls.debug = (allControls["f"] || allControls["F"]) ?? false;
@@ -700,7 +765,7 @@ class Level {
     }
 
     spawnEnemy() {
-        let dist = (width > height ? width : height) / 2;
+        let dist = Math.sqrt(width**2+height**2)/2;
         //generate random angle
         let deg = Math.random() * Math.PI * 2
         //use math: x = r × cos( θ ) y = r × sin( θ )
@@ -711,7 +776,6 @@ class Level {
         };
 
         this.enemies.push(new Enemy(basePos.x + dist * Math.cos(deg), basePos.y + dist * Math.sin(deg), 32, 32))
-
     }
 
     tick() {
@@ -791,7 +855,6 @@ class Level {
         }
 
         this.uiContainer.draw(this);
-        this.ctx.fillStyle = "#ACACAC"
     }
 }
 

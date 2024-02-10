@@ -118,7 +118,7 @@ const SOUNDS = {
 function newWeapon(type_ = "", baseProjectile = {
     count: 1,
     spread: 0,
-    damage: 10,
+    damage: 20,
     range: 2000,
     speed: 0.7,
     size: 8,
@@ -200,7 +200,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.op.SonicBoom, maxhealth = 100) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -623,6 +623,8 @@ class Level {
 
         this.paused = false;
 
+        // this all could be displayed with html and css, but i'm not THAT good
+        // might change after release
         this.uiContainer = new UIContainer({
             coinCounter: new Label("coinCounter", 0, TEXTURES.ui.coin, 50, 50, "#FFFFFF", "20px PixelOperator,sans-serif"),
             healthBar: new Label("healthBar", 0, TEXTURES.ui.health, 50, 100, "#FFDDDD", "20px PixelOperator,sans-serif"),

@@ -226,7 +226,7 @@ const WEAPONS = {
 
 class Player {
     //this is a player. 
-    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.SMG, maxhealth = 100) {
+    constructor(x, y, width = 64, height = 64, texture = TEXTURES.player.idle, weapon = WEAPONS.Pistol, maxhealth = 100) {
         this.x = x;
         this.y = y;
         this.xv = 0;
@@ -353,8 +353,8 @@ class Enemy {
         this.y = y;
         this.xv = 0;
         this.yv = 0;
-        this.width = width;
-        this.height = height;
+        this.width = width * maxhealth / 40;
+        this.height = height * maxhealth / 40;
         this.direction = direction
         this.texture = texture;
         this.maxhealth = maxhealth;
@@ -381,8 +381,8 @@ class Enemy {
             this.stunned -= deltaTime;
             this.xv *= deltaTime / (deltaTime + 10);
             this.yv *= deltaTime / (deltaTime + 10);
-            if (this.xv < 1 && this.yv < 1) {
-                this.stunned = 0;
+            if (this.xv < 1 && this.yv < 1 && this.stunned > 11) {
+                this.stunned = 10;
             }
         } else {
             this.xv = Math.sin(this.direction) * this.speed * deltaTime;
@@ -401,7 +401,8 @@ class Enemy {
                 otherEnemy.mergeTimer += deltaTime / 2;
                 // when they stuck for too long they merge (1 sec?)
                 if (this.mergeTimer > 1000 && otherEnemy.mergeTimer > 1000) {
-                    let merged = new Enemy((this.x + otherEnemy.x) / 2, (this.y + otherEnemy.y) / 2, (this.width + otherEnemy.width) / 1.5, (this.height + otherEnemy.height) / 1.5, (this.direction + otherEnemy.direction) / 2, this.maxhealth + otherEnemy.maxhealth);
+                    // hardcode width & height to 32, make size dependent on max health more
+                    let merged = new Enemy((this.x + otherEnemy.x) / 2, (this.y + otherEnemy.y) / 2, 32, 32, (this.direction + otherEnemy.direction) / 2, this.maxhealth + otherEnemy.maxhealth);
                     merged.speed = (this.speed + otherEnemy.speed) / 1.5;
                     merged.health = this.health + otherEnemy.health;
                     merged.damage = this.damage + otherEnemy.damage;
@@ -494,7 +495,7 @@ class Projectile {
                 //deletes both sprites
                 enemy.takeDamage(this.damage, level, {
                     direction: this.direction,
-                    strength: (this.damage) / (enemy.maxhealth)
+                    strength: (this.damage) / (enemy.maxhealth) * 5
                 });
                 this.active = false;
             }

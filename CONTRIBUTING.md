@@ -1,1 +1,1 @@
-just tell me what featured u changed for now
+just tell me what features u changed for now
